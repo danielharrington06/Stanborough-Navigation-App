@@ -342,5 +342,4 @@ public class DatabaseHelperScript : MonoBehaviour
 
         return mapEdges;
     }
-
 }
