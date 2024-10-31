@@ -325,6 +325,22 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
+    This function uses SQL to get all the edges that it should draw on the map.
     */
-    
+    public double[,] GetMapEdges() {
+        
+        // query db
+        var (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge");
+
+        double[,] mapEdges = new double[mapEdgeValues.Count,4];
+
+        for (int i = 0; i < mapEdgeValues.Count; i++) {
+            for (int j = 0; j < mapEdgeValues[i].Count; j++) {
+                mapEdges[i, j] = Convert.ToDouble(mapEdgeValues[i][j]);
+            }
+        }
+
+        return mapEdges;
+    }
+
 }
