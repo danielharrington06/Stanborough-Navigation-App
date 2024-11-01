@@ -19,13 +19,17 @@ public class MapMeshGenerator : MonoBehaviour
     bool click1Active;
     bool click2Active;
     Vector3 worldClick;
+    int time;
 
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
+        time = 0;
     }
 
     void Update() {
+        time += 1;
+
         // check for a mouse click
         if (Input.GetMouseButtonDown(0)) {
 
@@ -37,8 +41,11 @@ public class MapMeshGenerator : MonoBehaviour
             
             Debug.Log("Click: " + worldClick);
             }
-            
-        DrawLines();
+        if (time%60 == 0) {
+            time = 0;
+            DrawLines();
+        }
+        
     }
 
     void DrawLines() {
