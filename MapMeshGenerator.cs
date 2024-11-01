@@ -13,12 +13,43 @@ public class MapMeshGenerator : MonoBehaviour
     public float lineWidth = 0.05f; // line width
     public Color lineColour = Color.black;
 
+    // for database stuff
+    Vector3 click1;
+    Vector3 click2;
+    bool click1Active;
+    bool click2Active;
+    Vector3 worldClick;
+
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
     }
 
     void Update() {
+        // check for a mouse click
+        if (Input.GetMouseButtonDown(0)) {
+
+            // get the mouse position in screen coordinates
+            Vector3 screenPosition = Input.mousePosition;
+
+            // convert screen coordinates to world position
+            worldClick = Camera.main.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0));
+            
+            if (!click1Active && !click2Active) {
+                click1 = new Vector3(worldClick.x, worldClick.y, worldClick.z);
+                click1Active = true;
+            }
+            else if (click1Active && !click2Active) {
+                click2 = new Vector3(worldClick.x, worldClick.y, worldClick.z);
+                click2Active = true;
+            }
+            else if (click1Active && click2Active) {
+                // then save stuff and reset
+                databaseHelper.SaveMapEdge(click1.x, click1.y, click2.x, click2.y);
+                click1Active = false;
+                click2Active = false;
+            }
+        }
         DrawLines();
     }
 
@@ -53,14 +84,20 @@ public class MapMeshGenerator : MonoBehaviour
             // calculate direction, so can get points
             Vector3 direction = (point2 - point1).normalized;
 
-            // calculate offset so can get vertices
-            Vector3 offset = new Vector3(-direction.y, direction.x, 0) * (lineWidth / 2f);
+            // calculate perp offset so can make line have width
+            Vector3 perpOffset = new Vector3(-direction.y, direction.x, 0) * (lineWidth / 2f);
+
+            // calculate parallel offset so can make new line fill one half width past the point
+            // necessary to look good when two lines meet at a single point
+            Vector3 paraOffset = new Vector3(direction.x, direction.y, 0) * (lineWidth / 2f);
 
             // define the four vertices of the line
-            points.Add(point1 + offset);
-            points.Add(point1 - offset);
-            points.Add(point2 + offset);
-            points.Add(point2 - offset);
+            // perp offset is rotated 90 degree clockwise to the line
+            // para offset is same direction as line from point 1 to point 2
+            points.Add(point1 + perpOffset - paraOffset);
+            points.Add(point1 - perpOffset - paraOffset);
+            points.Add(point2 + perpOffset + paraOffset);
+            points.Add(point2 - perpOffset + paraOffset);
         }
 
         return points.ToArray();

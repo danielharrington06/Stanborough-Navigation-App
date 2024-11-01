@@ -342,4 +342,13 @@ public class DatabaseHelperScript : MonoBehaviour
 
         return mapEdges;
     }
+
+    /**
+    This function is only used in testing but uses SQL to save a map edge
+    */
+    public void SaveMapEdge(float point1x, float point1y, float point2x, float point2y) {
+
+        // query db
+        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES ("+Convert.ToString(point1x)+", "+Convert.ToString(point1y)+", " +Convert.ToString(point2x)+", " +Convert.ToString(point2y)+", 1, 0)");
+    }
 }
