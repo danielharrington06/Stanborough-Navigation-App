@@ -327,10 +327,11 @@ public class DatabaseHelperScript : MonoBehaviour
     /**
     This function uses SQL to get all the edges that it should draw on the map.
     */
-    public double[,] GetMapEdges() {
-        
+    public double[,] GetMapEdges(bool floor) {
+
         // query db
-        var (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge");
+        int floorNum = Convert.ToInt32(floor);
+        var (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_"+floorNum+" = 1");
 
         double[,] mapEdges = new double[mapEdgeValues.Count,4];
 
@@ -349,6 +350,6 @@ public class DatabaseHelperScript : MonoBehaviour
     public void SaveMapEdge(float point1x, float point1y, float point2x, float point2y) {
 
         // query db
-        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES ("+Convert.ToString(point1x)+", "+Convert.ToString(point1y)+", " +Convert.ToString(point2x)+", " +Convert.ToString(point2y)+", 1, 0)");
+        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES ("+Convert.ToString(point1x)+", "+Convert.ToString(point1y)+", " +Convert.ToString(point2x)+", " +Convert.ToString(point2y)+", 1, 1)");
     }
 }
