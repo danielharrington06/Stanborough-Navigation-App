@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MapMeshGenerator : MonoBehaviour
+public class NodeDisplayerScript : MonoBehaviour
 {
     Mesh mesh;
     [SerializeField] private DatabaseHelperScript databaseHelper;
@@ -13,15 +13,10 @@ public class MapMeshGenerator : MonoBehaviour
 
     // line properties
     public float lineWidth = 0.05f; // line width
-    public Color lineColour = Color.black;
+    public Color lineColour = Color.red;
 
     // for database stuff
-    Vector3 click1;
-    Vector3 click2;
-    bool click1Active;
-    bool click2Active;
     Vector3 worldClick;
-    int time;
 
     void Start() {
         mesh = new Mesh();
@@ -30,29 +25,7 @@ public class MapMeshGenerator : MonoBehaviour
 
     void Update() {
         floor = userSettings.floor;
-        // check for a mouse click
-        if (Input.GetMouseButtonDown(0)) {
-
-            // get the mouse position in screen coordinates
-            Vector3 screenPosition = Input.mousePosition;
-
-            // convert screen coordinates to world position
-            worldClick = Camera.main.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0));
-            
-            /* if (!click1Active && !click2Active) {
-                click1 = new Vector3(worldClick.x, worldClick.y, worldClick.z);
-                click1Active = true;
-            }
-            else if (click1Active && !click2Active) {
-                click2 = new Vector3(worldClick.x, worldClick.y, worldClick.z);
-                click2Active = true;
-                // save edge
-                databaseHelper.SaveMapEdge(click1.x, click1.y, click2.x, click2.y);
-                click1Active = false;
-                click2Active = false;
-            } */
-            Debug.Log(worldClick);
-        }
+        
         DrawLines();
     }
 
@@ -77,7 +50,7 @@ public class MapMeshGenerator : MonoBehaviour
 
         List<Vector3> points = new List<Vector3>();
         // get all edges from db
-        double[,] mapEdges = databaseHelper.GetMapEdges(floor);
+        double[,] mapEdges = databaseHelper.GetEdgeCoordinates(floor);
         for (int i = 0; i < mapEdges.GetLength(0); i++) {
 
             // get two points for the line
