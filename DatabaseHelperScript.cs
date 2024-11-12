@@ -380,29 +380,7 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This function uses SQL to get the coordinates of all edges in the map
-    */
-    /* 
-    public double[,] GetEdgeCoordinates(bool floor) {
-
-        // query db
-        int floorNum = Convert.ToInt32(floor);
-        //var (edgeFields, edgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and (tblEdge.edge_type_id = \"C\" or tblEdge.edge_type_id = \"I\") and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + " )");
-        var (edgeFields, edgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and (tblEdge.edge_type_id = \"O\" or tblEdge.edge_type_id = \"C\") and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + " )");
-        
-        double[,] edges = new double[edgeValues.Count,4];
-
-        for (int i = 0; i < edgeValues.Count; i++) {
-            for (int j = 0; j < edgeValues[i].Count; j++) {
-                edges[i, j] = Convert.ToDouble(edgeValues[i][j]);
-            }
-        }
-
-        return edges;
-    } */
-
-    /**
-    This function uses SQL to get the coordinates of edges that don't have additional vertices
+    This function uses SQL to get the coordinates of all edges: the simple and hard ones
     */
     public double[,] GetEdgeCoordinates(bool floor) {
 
@@ -416,7 +394,7 @@ public class DatabaseHelperScript : MonoBehaviour
 
         // simple is where there are not vertices involved
         // get all coordinates for non vertex edges
-        var (simpleEdgeFields, simpleEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id left join tblEdgeVertex ON tblEdge.edge_id = tblEdgeVertex.edge_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and tblEdgeVertex.edge_id is null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by tblEdge.edge_id");
+        var (simpleEdgeFields, simpleEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id left join tblEdgeVertex ON tblEdge.edge_id = tblEdgeVertex.edge_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and tblEdgeVertex.edge_id is null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by tblEdge.edge_id asc");
         int numSimpleEdges = simpleEdgeValues.Count;
 
         // hard is where there are vertices involved
