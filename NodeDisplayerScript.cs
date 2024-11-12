@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.SearchService;
 using UnityEngine;
 
 public class NodeDisplayerScript : MonoBehaviour
@@ -48,14 +49,12 @@ public class NodeDisplayerScript : MonoBehaviour
         mesh.colors = colors;
     }
 
-    List<double[]> DefineLines() {
-        // get all edge id's from db
-        int[] edge_IDs = databaseHelper.GetEdgeIDs();
-        int numEdges = edge_IDs.Length;
+    double[,] DefineLines() {
 
-        List<double[]> pointsList = new List<double[]>();
+        // get all coordinates of edges that dont have additional vertices
+        double[,] edgeCoordinates = databaseHelper.GetEdgeCoordinates(floor);
 
-        
+/* 
 
         char[] allowedEdgeTypes = new char[] {'O', 'I'};
 
@@ -97,23 +96,23 @@ public class NodeDisplayerScript : MonoBehaviour
                     // from last edge vertex to node 2
                     pointsList.Add(new double[] {edgeVertices[numVertices,0], edgeVertices[numVertices,1], node2Coordinates[0], node2Coordinates[1]});
                 }
-            }
-        }
-        return pointsList;
+            } 
+        } */
+        return edgeCoordinates;
     }
     
     Vector3[] GetLinePoints() {
 
         List<Vector3> points = new List<Vector3>();
 
-        List<double[]> pointsList = DefineLines();
+        double[,] edgeCoordinates = databaseHelper.GetEdgeCoordinates(floor);
         
         // now draw them out
-        for (int i = 0; i < pointsList.Count; i++) {
+        for (int i = 0; i < edgeCoordinates.GetLength(0); i++) {
 
             // get two points for the line
-            Vector3 point1 = new Vector4((float)pointsList[i][0], (float)pointsList[i][1], 0);
-            Vector3 point2 = new Vector4((float)pointsList[i][2], (float)pointsList[i][3], 0);
+            Vector3 point1 = new Vector4((float)edgeCoordinates[i, 0], (float)edgeCoordinates[i, 1], 0);
+            Vector3 point2 = new Vector4((float)edgeCoordinates[i, 2], (float)edgeCoordinates[i, 3], 0);
 
             // calculate direction, so can get points
             Vector3 direction = (point2 - point1).normalized;

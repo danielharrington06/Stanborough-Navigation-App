@@ -382,6 +382,7 @@ public class DatabaseHelperScript : MonoBehaviour
     /**
     This function uses SQL to get the coordinates of all edges in the map
     */
+    /* 
     public double[,] GetEdgeCoordinates(bool floor) {
 
         // query db
@@ -398,65 +399,85 @@ public class DatabaseHelperScript : MonoBehaviour
         }
 
         return edges;
-    }
+    } */
 
     /**
-    This function uses SQL to get a specified record from tbledge and returns the values in an array of objects
+    This function uses SQL to get the coordinates of edges that don't have additional vertices
     */
-    public object[] GetEdgeRecord(int edge_id) {
-        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id, node_1_id, node_2_id, weight, edge_type_id, one_way from tblEdge where edge_id = " + edge_id);
-        object[] result = new object[6];
-        for (int i = 0; i < edgeValues[0].Count; i++) {
-            result[i] = edgeValues[0][i];
+    public double[,] GetEdgeCoordinates(bool floor) {
+
+        int floorNum;
+        if (!floor) { // floor = false so 0
+            floorNum = 0;
+        }
+        else { // floor = true so 1
+            floorNum = 1;
         }
 
-        return result;
-    }    
+        // simple is where there are not vertices involved
+        // get all coordinates for non vertex edges
+        var (simpleEdgeFields, simpleEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id left join tblEdgeVertex ON tblEdge.edge_id = tblEdgeVertex.edge_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and tblEdgeVertex.edge_id is null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by tblEdge.edge_id");
+        int numSimpleEdges = simpleEdgeValues.Count;
 
-    /** 
-    This function uses SQL to count edge vertices to return a boolean representing true if there are any and false if not
-    */
-    public bool EdgeVerticesExist(int edge_id) {
-        // query database for number of vertices from edge_id
-        double numVertices = ExecuteScalarSelect("select Count(edge_vertex_id) from tblEdgeVertex where edge_id = " + edge_id);
+        // hard is where there are vertices involved
+        // get all distinct vertexed edge id's and node coordinates
+        var (hardUniqueEdgeFields, hardUniqueEdgeValues) = ExecuteSelect("select distinct tblEdge.edge_id, t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblEdgeVertex on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by edge_id asc;");
+        // get all edge vertexes ordered first by edge id to match with above, then by order
+        var (hardCoordinateEdgeFields, hardCoordinateEdgeValues) = ExecuteSelect("select tblEdgeVertex.edge_id, tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by edge_id asc, vertex_order asc;");
 
-        if (numVertices == 0) { // if none
-            return false;
-        }
-        else { // if there are some
-            return true;
-        }
-    }
+        // define array to store coordinates
+        // number of lines is equal to the number of simple edges (naturally) plus the number of hard edge id's plus the number of hard edge vertices
+        // this is because a single hard edge (with no vertices (despite the contradiction of it being hard)) would have one line
+        // one vertex for this edge would make two lines, two vertices, three lines total
+        // therefore for hard edges, total lines is hard distinct edges + hard edge vertices
+        double[,] edges = new double[numSimpleEdges + hardUniqueEdgeValues.Count + hardCoordinateEdgeValues.Count,4];
 
-    /**
-    This function uses SQL to get all coordinates in tbledgevertex of a specific edge_id
-    */
-    public double[,] GetEdgeVertices(int edge_id) {
-        // query db
-        var (vertexFields, vertexValues) = ExecuteSelect("select x_coordinate, y_coordinate from tblEdgeVertex where edge_id = " + edge_id + "order by edge_vertex_id asc");
-        int numVertices = vertexValues.Count;
-
-        double[,] vertices = new double[numVertices,2]; // width 2
-
-        //unpack results from db
-        for (int i = 0; i < numVertices; i ++) {
-            vertices[i, 0] = Convert.ToDouble(vertexValues[i][0]);
-            vertices[i, 1] = Convert.ToDouble(vertexValues[i][1]);
+        for (int i = 0; i < numSimpleEdges; i++) {
+            for (int j = 0; j < 4; j++) {
+                edges[i, j] = Convert.ToDouble(simpleEdgeValues[i][j]);
+            }
         }
 
-        return vertices;
-    }
+        // add a row to hardCoordinateEdgeValues so that we can always get the vertexIndex+1, otherwise runtime error
+        hardCoordinateEdgeValues.Add(new List<object> {-1, 0, 0});
 
-    /**
-    This function uses SQL to get the coordinates of a specific node
-    */
-    public double[] GetNodeCoordinates(int node_id) {
-        // query db
-        var (vertexFields, vertexValues) = ExecuteSelect("select x_coordinate, y_coordinate from tblNode where node_id = " + node_id);
-        double[] coordinates = new double[2];
-        coordinates[0] = Convert.ToDouble(vertexValues[0][0]);
-        coordinates[1] = Convert.ToDouble(vertexValues[0][1]);
+        // now go through hard edges
+        int currentEdgeIndex = 0; // the index from distinct edge id's
+        int vertexIndex = 0; // increments for each new row in coordinate edgevalues
+        int writeRow = numSimpleEdges; // which row in edges currently writing to
+        while (currentEdgeIndex < hardUniqueEdgeValues.Count) { // stop once exhausted all unique edge id's
+            int currentEdgeID = (int)hardUniqueEdgeValues[currentEdgeIndex][0];
+            // loops through the section where the egde id's are all the same
 
-        return coordinates;
+            //first add line for from node 1 to first vertex
+            edges[writeRow, 0] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][1]);
+            edges[writeRow, 1] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][2]);
+            edges[writeRow, 2] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][1]);
+            edges[writeRow, 3] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][2]);
+
+            writeRow++;
+
+            while ((int)hardCoordinateEdgeValues[vertexIndex+1][0] == currentEdgeID) {
+                // connect vertex index to vertex index + 1
+                edges[writeRow, 0] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][1]);
+                edges[writeRow, 1] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][2]);
+                edges[writeRow, 2] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex + 1][1]);
+                edges[writeRow, 3] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex + 1][2]);
+
+                vertexIndex++;
+                writeRow++;
+            }
+            // now add line for from last vertex to node 2
+            edges[writeRow, 0] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][1]);
+            edges[writeRow, 1] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][2]);
+            edges[writeRow, 2] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][3]);
+            edges[writeRow, 3] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][4]);
+
+            vertexIndex++;
+            writeRow++;
+            currentEdgeIndex++;
+        }
+
+        return edges;
     }
 }
