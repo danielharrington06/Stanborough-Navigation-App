@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class NodeDisplayerScript : MonoBehaviour
@@ -45,17 +47,71 @@ public class NodeDisplayerScript : MonoBehaviour
         }
         mesh.colors = colors;
     }
+
+    List<double[]> DefineLines() {
+        // get all edge id's from db
+        int[] edge_IDs = databaseHelper.GetEdgeIDs();
+        int numEdges = edge_IDs.Length;
+
+        List<double[]> pointsList = new List<double[]>();
+
+        char[] allowedEdgeTypes = new char[] {'O', 'I'};
+
+        // for each edge, check if fits requirements and if so add to map edges.
+        for (int i = 0; i < numEdges; i++) {
+            int currentEdgeID = edge_IDs[i];
+            var record = databaseHelper.GetEdgeRecord(currentEdgeID);
+            int currentNode1 = Convert.ToInt32(record[1]);
+            int currentNode2 = Convert.ToInt32(record[2]);
+            char currentEdgeType = Convert.ToChar(record[4]);
+
+            if (!allowedEdgeTypes.Contains(currentEdgeType)) {
+                // if not a current valid edge type then pass
+                continue;
+            }
+            else {
+                double[] node1Coordinates = databaseHelper.GetNodeCoordinates(currentNode1);
+                double[] node2Coordinates = databaseHelper.GetNodeCoordinates(currentNode2);
+                // check if there are edge vertices for this edge
+                
+                if (!databaseHelper.EdgeVerticesExist(currentEdgeID)) {
+                    // there are no edge vertices other than those defined at the nodes
+                    pointsList.Add(new double[] {node1Coordinates[0], node1Coordinates[1], node2Coordinates[0], node2Coordinates[1]});
+                }
+
+                else {
+                    // there are edge vertices that need to be considered
+                    double[,] edgeVertices = databaseHelper.GetEdgeVertices(currentEdgeID);
+                    // from node 1 to first edge vertex
+                    pointsList.Add(new double[] {node1Coordinates[0], node1Coordinates[1], edgeVertices[0, 0], edgeVertices[0, 1]});
+                    int numVertices = edgeVertices.GetLength(0); // represnts the number of lines containing just vertices
+                    // eg if 3 then loop no times as can connect from node 1 to vertex and from vertex to node 2
+
+                    for (int j = 0; j < numVertices - 1; j++) { // num lines from just vertices is the numVertices - 1
+                        // between j and j + 1
+                        pointsList.Add(new double[] {edgeVertices[j,0], edgeVertices[j,1], edgeVertices[j+1,0], edgeVertices[j+1,1]});
+                    }
+
+                    // from last edge vertex to node 2
+                    pointsList.Add(new double[] {edgeVertices[numVertices,0], edgeVertices[numVertices,1], node2Coordinates[0], node2Coordinates[1]});
+                }
+            }
+        }
+        return pointsList;
+    }
     
     Vector3[] GetLinePoints() {
 
         List<Vector3> points = new List<Vector3>();
-        // get all edges from db
-        double[,] mapEdges = databaseHelper.GetEdgeCoordinates(floor);
-        for (int i = 0; i < mapEdges.GetLength(0); i++) {
+
+        List<double[]> pointsList = DefineLines();
+        
+        // now draw them out
+        for (int i = 0; i < pointsList.Count; i++) {
 
             // get two points for the line
-            Vector3 point1 = new Vector4((float)mapEdges[i, 0], (float)mapEdges[i, 1], 0);
-            Vector3 point2 = new Vector4((float)mapEdges[i, 2], (float)mapEdges[i, 3], 0);
+            Vector3 point1 = new Vector4((float)pointsList[i][0], (float)pointsList[i][1], 0);
+            Vector3 point2 = new Vector4((float)pointsList[i][2], (float)pointsList[i][3], 0);
 
             // calculate direction, so can get points
             Vector3 direction = (point2 - point1).normalized;

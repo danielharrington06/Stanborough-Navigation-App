@@ -232,6 +232,26 @@ public class DatabaseHelperScript : MonoBehaviour
 
         return ExecuteSelect("SELECT * FROM tbledge WHERE one_way = true");
     }
+    
+    /**
+    This function uses SQL to get all edge ID's
+    */
+    public int[] GetEdgeIDs() {
+
+        // query db
+        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id from tblEdge");
+        int numberOfEdges = edgeValues.Count;
+
+        // return array
+        int[] edgeIDs = new int[numberOfEdges];
+
+        for (int i = 0; i < numberOfEdges; i++) {
+            edgeIDs[i] = Convert.ToInt32(edgeValues[i][1]);
+        }
+
+        return edgeIDs;
+
+    }
 
     /**
     This function uses SQL to source the boolean value controlling whether the time of day
@@ -361,7 +381,7 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This function is used to get the coordinates of all edges in the map
+    This function uses SQL to get the coordinates of all edges in the map
     */
     public double[,] GetEdgeCoordinates(bool floor) {
 
@@ -379,5 +399,65 @@ public class DatabaseHelperScript : MonoBehaviour
         }
 
         return edges;
+    }
+
+    /**
+    This function uses SQL to get a specified record from tbledge and returns the values in an array of objects
+    */
+    public object[] GetEdgeRecord(int edge_id) {
+        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id, node_1_id, node_2_id, weight, edge_type_id, one_way from tblEdge where edge_id = " + edge_id);
+        object[] result = new object[6];
+        for (int i = 0; i < edgeValues[0].Count; i++) {
+            result[i] = edgeValues[0][i];
+        }
+
+        return result;
+    }    
+
+    /** 
+    This function uses SQL to count edge vertices to return a boolean representing true if there are any and false if not
+    */
+    public bool EdgeVerticesExist(int edge_id) {
+        // query database for number of vertices from edge_id
+        double numVertices = ExecuteScalarSelect("select Count(edge_vertex_id) from tblEdgeVertex where edge_id = " + edge_id);
+
+        if (numVertices == 0) { // if none
+            return false;
+        }
+        else { // if there are some
+            return true;
+        }
+    }
+
+    /**
+    This function uses SQL to get all coordinates in tbledgevertex of a specific edge_id
+    */
+    public double[,] GetEdgeVertices(int edge_id) {
+        // query db
+        var (vertexFields, vertexValues) = ExecuteSelect("select x_coordinate, y_coordinate from tblEdgeVertex where edge_id = " + edge_id + "order by edge_vertex_id asc");
+        int numVertices = vertexValues.Count;
+
+        double[,] vertices = new double[numVertices,2]; // width 2
+
+        //unpack results from db
+        for (int i = 0; i < numVertices; i ++) {
+            vertices[i, 0] = Convert.ToDouble(vertexValues[i][0]);
+            vertices[i, 1] = Convert.ToDouble(vertexValues[i][1]);
+        }
+
+        return vertices;
+    }
+
+    /**
+    This function uses SQL to get the coordinates of a specific node
+    */
+    public double[] GetNodeCoordinates(int node_id) {
+        // query db
+        var (vertexFields, vertexValues) = ExecuteSelect("select x_coordinate, y_coordinate from tblNode where node_id = " + node_id);
+        double[] coordinates = new double[2];
+        coordinates[0] = Convert.ToDouble(vertexValues[0][0]);
+        coordinates[1] = Convert.ToDouble(vertexValues[0][1]);
+
+        return coordinates;
     }
 }
