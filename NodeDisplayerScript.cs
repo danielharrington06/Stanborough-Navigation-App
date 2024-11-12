@@ -55,6 +55,8 @@ public class NodeDisplayerScript : MonoBehaviour
 
         List<double[]> pointsList = new List<double[]>();
 
+        
+
         char[] allowedEdgeTypes = new char[] {'O', 'I'};
 
         // for each edge, check if fits requirements and if so add to map edges.

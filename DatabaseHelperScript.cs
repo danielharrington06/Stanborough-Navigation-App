@@ -239,18 +239,17 @@ public class DatabaseHelperScript : MonoBehaviour
     public int[] GetEdgeIDs() {
 
         // query db
-        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id from tblEdge");
+        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id from tblEdge order by edge_id asc");
         int numberOfEdges = edgeValues.Count;
 
         // return array
         int[] edgeIDs = new int[numberOfEdges];
 
         for (int i = 0; i < numberOfEdges; i++) {
-            edgeIDs[i] = Convert.ToInt32(edgeValues[i][1]);
+            edgeIDs[i] = Convert.ToInt32(edgeValues[i][0]);
         }
 
         return edgeIDs;
-
     }
 
     /**
