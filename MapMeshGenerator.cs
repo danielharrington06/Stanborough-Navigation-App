@@ -38,19 +38,8 @@ public class MapMeshGenerator : MonoBehaviour
 
             // convert screen coordinates to world position
             worldClick = Camera.main.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0));
-            
-            /* if (!click1Active && !click2Active) {
-                click1 = new Vector3(worldClick.x, worldClick.y, worldClick.z);
-                click1Active = true;
-            }
-            else if (click1Active && !click2Active) {
-                click2 = new Vector3(worldClick.x, worldClick.y, worldClick.z);
-                click2Active = true;
-                // save edge
-                databaseHelper.SaveMapEdge(click1.x, click1.y, click2.x, click2.y);
-                click1Active = false;
-                click2Active = false;
-            } */
+
+            // show click in unity console
             Debug.Log(worldClick);
         }
         DrawLines();
