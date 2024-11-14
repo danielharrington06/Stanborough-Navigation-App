@@ -399,9 +399,9 @@ public class DatabaseHelperScript : MonoBehaviour
 
         // hard is where there are vertices involved
         // get all distinct vertexed edge id's and node coordinates
-        var (hardUniqueEdgeFields, hardUniqueEdgeValues) = ExecuteSelect("select distinct tblEdge.edge_id, t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblEdgeVertex on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by edge_id asc;");
+        var (hardUniqueEdgeFields, hardUniqueEdgeValues) = ExecuteSelect("select distinct tblEdge.edge_id, t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblEdgeVertex on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") and t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null order by edge_id asc;");
         // get all edge vertexes ordered first by edge id to match with above, then by order
-        var (hardCoordinateEdgeFields, hardCoordinateEdgeValues) = ExecuteSelect("select tblEdgeVertex.edge_id, tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by edge_id asc, vertex_order asc;");
+        var (hardCoordinateEdgeFields, hardCoordinateEdgeValues) = ExecuteSelect("select tblEdgeVertex.edge_id, tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") and t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null order by edge_id asc, vertex_order asc");
 
         // define array to store coordinates
         // number of lines is equal to the number of simple edges (naturally) plus the number of hard edge id's plus the number of hard edge vertices
@@ -457,5 +457,38 @@ public class DatabaseHelperScript : MonoBehaviour
         }
 
         return edges;
+    }
+
+    /* *
+    This function uses SQL to get all room connector lines.
+    */
+    public double[,] GetRoomConnectionCoordinates(bool floor) {
+
+        int floorNum;
+        if (!floor) { // floor = false so 0
+            floorNum = 0;
+        }
+        else { // floor = true so 1
+            floorNum = 1;
+        }
+
+        // query for coordinates and angle for connecting room to edge
+        var (roomEdgeFields, roomEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate, tR.x_coordinate, tR.y_coordinate, tR.door_angle from tblRoom tR inner join tblEdge on tR.edge_id = tblEdge.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tR.door_angle is not null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by edge_id asc");
+
+        // query for coordinates for connecting room to node
+        var (roomNodeFields, roomNodeValues) = ExecuteSelect("select tN.x_coordinate, tN.y_coordinate, tR.x_coordinate, tR.y_coordinate from tblRoom tR inner join tblnode tN on tN.node_id = tR.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tN.x_coordinate is not null and tN.y_coordinate is not null and (tN.floor = " + floorNum +")");
+
+        // get number of each type
+        int numEdgeConnects = roomEdgeValues.Count;
+        int numNodeConnects = roomNodeValues.Count;
+
+        // a single edge or node connect means a single line is needed
+        double[,] connectors = new double[numEdgeConnects + numNodeConnects,4];
+
+        //itereate through room edge values, finding the intersection points and filling them in
+        //iterate through room node fields, copying data in
+
+        return connectors;
+
     }
 }
