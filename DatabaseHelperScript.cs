@@ -485,8 +485,54 @@ public class DatabaseHelperScript : MonoBehaviour
         // a single edge or node connect means a single line is needed
         double[,] connectors = new double[numEdgeConnects + numNodeConnects,4];
 
-        //itereate through room edge values, finding the intersection points and filling them in
+        //iterate through room edge values, finding the intersection points and filling them in
+        for (int i = 0; i < numEdgeConnects; i++) {
+            double xIntercept, yIntercept;
+            // deal with possibility that angle might be 90 or -90 which leads to undefined tan output
+            if ((double)roomEdgeValues[i][6] == 90 || (double)roomEdgeValues[i][6] == -90) {
+                if ((double)roomEdgeValues[i][1] == (double)roomEdgeValues[i][3]) {
+                    // door angle is straight up or down and the edge is exactly horizontal
+                    xIntercept = (double)roomEdgeValues[i][4];
+                    yIntercept = (double)roomEdgeValues[i][1];
+                }
+                else {
+                    // edge is not perpendicular but room connector goes straight up
+                    // really should never execute, but have to code to be safe
+
+                    // derived from equation for a line
+                    // m1 is gradient of the edge
+                    double m1 = ((double)roomEdgeValues[i][1] - (double)roomEdgeValues[i][3]) / ((double)roomEdgeValues[i][0] - (double)roomEdgeValues[i][2]);
+
+                    xIntercept = (double)roomEdgeValues[i][4];
+                    yIntercept = m1*(xIntercept - (double)roomEdgeValues[i][0]) + (double)roomEdgeValues[i][1];
+
+                }
+            }
+            else {
+                // derived from equation for a line
+                // m1 is gradient of the edge
+                double m1 = ((double)roomEdgeValues[i][1] - (double)roomEdgeValues[i][3]) / ((double)roomEdgeValues[i][0] - (double)roomEdgeValues[i][2]);
+                // m2 is gradient of the room connector
+                double m2 = (double)Mathf.Tan((float)roomEdgeValues[i][6]);
+ 
+                xIntercept = (m1*(double)roomEdgeValues[i][0] - m2*(double)roomEdgeValues[i][4] + (double)roomEdgeValues[i][5] - (double)roomEdgeValues[i][1]) / (m1 - m2);
+                yIntercept = m1*(xIntercept - (double)roomEdgeValues[i][0]) + (double)roomEdgeValues[i][1];
+            }
+
+            //update connectors array
+            connectors[i, 0] = (double)roomEdgeValues[i][4];
+            connectors[i, 1] = (double)roomEdgeValues[i][5];
+            connectors[i, 2] = xIntercept;
+            connectors[i, 3] = yIntercept;
+                
+        }
+
         //iterate through room node fields, copying data in
+        for (int i = 0; i < numNodeConnects; i++) {
+            for (int j = 0; j < 4; j++) {
+                connectors[i, j] = (double)roomNodeValues[i][j];
+            }
+        }
 
         return connectors;
 
