@@ -531,7 +531,7 @@ public class DatabaseHelperScript : MonoBehaviour
                 double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
                 
                 // m2 is gradient of the room connector
-                double m2 = Convert.ToDouble(Mathf.Tan(Convert.ToSingle(roomEdgeValues[i][6])));
+                double m2 = Convert.ToDouble(Mathf.Tan(Convert.ToSingle(roomEdgeValues[i][6])*Mathf.PI/180));
  
                 xIntercept = (m1*Convert.ToDouble(roomEdgeValues[i][0]) - m2*Convert.ToDouble(roomEdgeValues[i][4]) + Convert.ToDouble(roomEdgeValues[i][5]) - Convert.ToDouble(roomEdgeValues[i][1])) / (m1 - m2);
                 yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
