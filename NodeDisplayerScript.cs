@@ -99,8 +99,8 @@ public class NodeDisplayerScript : MonoBehaviour
 
             // add second triangle
             triangles.Add(i+1);
-            triangles.Add(i+3);
             triangles.Add(i+2);
+            triangles.Add(i+3);
         }
 
         return triangles.ToArray();

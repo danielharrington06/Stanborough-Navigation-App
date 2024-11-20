@@ -18,12 +18,13 @@ public class RoomConnectorScript : MonoBehaviour
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
+        lineColour = Color.blue;
     }
 
     void Update() {
         floor = userSettings.floor;
 
-        //DrawLines();
+        DrawLines();
     }
 
     void DrawLines() {
@@ -93,8 +94,8 @@ public class RoomConnectorScript : MonoBehaviour
 
             // add second triangle
             triangles.Add(i+1);
-            triangles.Add(i+3);
             triangles.Add(i+2);
+            triangles.Add(i+3);
         }
 
         return triangles.ToArray();

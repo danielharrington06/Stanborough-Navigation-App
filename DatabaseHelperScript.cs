@@ -459,12 +459,13 @@ public class DatabaseHelperScript : MonoBehaviour
         return edges;
     }
 
-    /* *
+    /**
     This function uses SQL to get all room connector lines.
     */
     public double[,] GetRoomConnectionCoordinates(bool floor) {
 
         int floorNum;
+        
         if (!floor) { // floor = false so 0
             floorNum = 0;
         }
@@ -473,7 +474,7 @@ public class DatabaseHelperScript : MonoBehaviour
         }
 
         // query for coordinates and angle for connecting room to edge
-        var (roomEdgeFields, roomEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate, tR.x_coordinate, tR.y_coordinate, tR.door_angle from tblRoom tR inner join tblEdge on tR.edge_id = tblEdge.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tR.door_angle is not null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by edge_id asc");
+        var (roomEdgeFields, roomEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate, tR.x_coordinate, tR.y_coordinate, tR.door_angle from tblRoom tR inner join tblEdge on tR.edge_id = tblEdge.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tR.door_angle is not null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by tR.edge_id asc");
 
         // query for coordinates for connecting room to node
         var (roomNodeFields, roomNodeValues) = ExecuteSelect("select tN.x_coordinate, tN.y_coordinate, tR.x_coordinate, tR.y_coordinate from tblRoom tR inner join tblnode tN on tN.node_id = tR.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tN.x_coordinate is not null and tN.y_coordinate is not null and (tN.floor = " + floorNum +")");
@@ -489,11 +490,12 @@ public class DatabaseHelperScript : MonoBehaviour
         for (int i = 0; i < numEdgeConnects; i++) {
             double xIntercept, yIntercept;
             // deal with possibility that angle might be 90 or -90 which leads to undefined tan output
-            if ((double)roomEdgeValues[i][6] == 90 || (double)roomEdgeValues[i][6] == -90) {
-                if ((double)roomEdgeValues[i][1] == (double)roomEdgeValues[i][3]) {
+            if (Convert.ToDouble(roomEdgeValues[i][6]) == 90 || Convert.ToDouble(roomEdgeValues[i][6]) == -90) {
+                // check if edge is horizontal
+                if (Convert.ToDouble(roomEdgeValues[i][1]) == Convert.ToDouble(roomEdgeValues[i][3])) {
                     // door angle is straight up or down and the edge is exactly horizontal
-                    xIntercept = (double)roomEdgeValues[i][4];
-                    yIntercept = (double)roomEdgeValues[i][1];
+                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
+                    yIntercept = Convert.ToDouble(roomEdgeValues[i][1]);
                 }
                 else {
                     // edge is not perpendicular but room connector goes straight up
@@ -501,27 +503,44 @@ public class DatabaseHelperScript : MonoBehaviour
 
                     // derived from equation for a line
                     // m1 is gradient of the edge
-                    double m1 = ((double)roomEdgeValues[i][1] - (double)roomEdgeValues[i][3]) / ((double)roomEdgeValues[i][0] - (double)roomEdgeValues[i][2]);
+                    double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
 
-                    xIntercept = (double)roomEdgeValues[i][4];
-                    yIntercept = m1*(xIntercept - (double)roomEdgeValues[i][0]) + (double)roomEdgeValues[i][1];
+                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
+                    yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
+
+                }
+            }
+            // deal with possibility that edge angle might be 0 or 180 which leads to infinite edge gradient
+            else if (Convert.ToDouble(roomEdgeValues[i][6]) == 0 || Convert.ToDouble(roomEdgeValues[i][6]) == 180) {
+                // check if edge is vertical
+                if (Convert.ToDouble(roomEdgeValues[i][0]) == Convert.ToDouble(roomEdgeValues[i][2])) {
+                    // door angle is straight left or right and the edge is exactly vertical
+                    xIntercept = Convert.ToDouble(roomEdgeValues[i][0]);
+                    yIntercept = Convert.ToDouble(roomEdgeValues[i][5]);
+                }
+                else {
+                    Debug.Log("Error: edge is vertical but room connector is not");
+                    xIntercept = double.NaN;
+                    yIntercept = double.NaN;
 
                 }
             }
             else {
                 // derived from equation for a line
                 // m1 is gradient of the edge
-                double m1 = ((double)roomEdgeValues[i][1] - (double)roomEdgeValues[i][3]) / ((double)roomEdgeValues[i][0] - (double)roomEdgeValues[i][2]);
+                double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
+                
                 // m2 is gradient of the room connector
-                double m2 = (double)Mathf.Tan((float)roomEdgeValues[i][6]);
+                double m2 = Convert.ToDouble(Mathf.Tan(Convert.ToSingle(roomEdgeValues[i][6])));
  
-                xIntercept = (m1*(double)roomEdgeValues[i][0] - m2*(double)roomEdgeValues[i][4] + (double)roomEdgeValues[i][5] - (double)roomEdgeValues[i][1]) / (m1 - m2);
-                yIntercept = m1*(xIntercept - (double)roomEdgeValues[i][0]) + (double)roomEdgeValues[i][1];
+                xIntercept = (m1*Convert.ToDouble(roomEdgeValues[i][0]) - m2*Convert.ToDouble(roomEdgeValues[i][4]) + Convert.ToDouble(roomEdgeValues[i][5]) - Convert.ToDouble(roomEdgeValues[i][1])) / (m1 - m2);
+                yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
             }
 
+            
             //update connectors array
-            connectors[i, 0] = (double)roomEdgeValues[i][4];
-            connectors[i, 1] = (double)roomEdgeValues[i][5];
+            connectors[i, 0] = Convert.ToDouble(roomEdgeValues[i][4]);
+            connectors[i, 1] = Convert.ToDouble(roomEdgeValues[i][5]);
             connectors[i, 2] = xIntercept;
             connectors[i, 3] = yIntercept;
                 
@@ -530,11 +549,11 @@ public class DatabaseHelperScript : MonoBehaviour
         //iterate through room node fields, copying data in
         for (int i = 0; i < numNodeConnects; i++) {
             for (int j = 0; j < 4; j++) {
-                connectors[i, j] = (double)roomNodeValues[i][j];
+                connectors[i + numEdgeConnects, j] = Convert.ToDouble(roomNodeValues[i][j]);
             }
         }
 
-        return connectors;
 
+        return connectors;
     }
 }
