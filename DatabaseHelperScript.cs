@@ -488,55 +488,8 @@ public class DatabaseHelperScript : MonoBehaviour
 
         //iterate through room edge values, finding the intersection points and filling them in
         for (int i = 0; i < numEdgeConnects; i++) {
-            double xIntercept, yIntercept;
-            // deal with possibility that angle might be 90 or -90 which leads to undefined tan output
-            if (Convert.ToDouble(roomEdgeValues[i][6]) == 90 || Convert.ToDouble(roomEdgeValues[i][6]) == -90) {
-                // check if edge is horizontal
-                if (Convert.ToDouble(roomEdgeValues[i][1]) == Convert.ToDouble(roomEdgeValues[i][3])) {
-                    // door angle is straight up or down and the edge is exactly horizontal
-                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
-                    yIntercept = Convert.ToDouble(roomEdgeValues[i][1]);
-                }
-                else {
-                    // edge is not perpendicular but room connector goes straight up
-                    // really should never execute, but have to code to be safe
 
-                    // derived from equation for a line
-                    // m1 is gradient of the edge
-                    double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
-
-                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
-                    yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
-
-                }
-            }
-            // deal with possibility that edge angle might be 0 or 180 which leads to infinite edge gradient
-            else if (Convert.ToDouble(roomEdgeValues[i][6]) == 0 || Convert.ToDouble(roomEdgeValues[i][6]) == 180) {
-                // check if edge is vertical
-                if (Convert.ToDouble(roomEdgeValues[i][0]) == Convert.ToDouble(roomEdgeValues[i][2])) {
-                    // door angle is straight left or right and the edge is exactly vertical
-                    xIntercept = Convert.ToDouble(roomEdgeValues[i][0]);
-                    yIntercept = Convert.ToDouble(roomEdgeValues[i][5]);
-                }
-                else {
-                    Debug.Log("Error: edge is vertical but room connector is not");
-                    xIntercept = double.NaN;
-                    yIntercept = double.NaN;
-
-                }
-            }
-            else {
-                // derived from equation for a line
-                // m1 is gradient of the edge
-                double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
-                
-                // m2 is gradient of the room connector
-                double m2 = Convert.ToDouble(Mathf.Tan(Convert.ToSingle(roomEdgeValues[i][6])*Mathf.PI/180));
- 
-                xIntercept = (m1*Convert.ToDouble(roomEdgeValues[i][0]) - m2*Convert.ToDouble(roomEdgeValues[i][4]) + Convert.ToDouble(roomEdgeValues[i][5]) - Convert.ToDouble(roomEdgeValues[i][1])) / (m1 - m2);
-                yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
-            }
-
+            var (xIntercept, yIntercept) = CalcIntersectionOfEdgeAndRoomConnector(Convert.ToDouble(roomEdgeValues[0]), Convert.ToDouble(roomEdgeValues[1]), Convert.ToDouble(roomEdgeValues[2]), Convert.ToDouble(roomEdgeValues[3]), Convert.ToDouble(roomEdgeValues[4]), Convert.ToDouble(roomEdgeValues[5]), Convert.ToDouble(roomEdgeValues[6]));
             
             //update connectors array
             connectors[i, 0] = Convert.ToDouble(roomEdgeValues[i][4]);
@@ -556,4 +509,60 @@ public class DatabaseHelperScript : MonoBehaviour
 
         return connectors;
     }
+
+    /**
+    This function uses coordinate geometry to find the intersection of a line defined by a set of coordinates
+    and a line defined by a start coordinate and an angle in degrees.
+    */
+    public (double, double) CalcIntersectionOfEdgeAndRoomConnector(double node1X, double node1Y, double node2X, double node2Y, double roomX, double roomY, double angle) {
+
+        double xIntercept, yIntercept;
+        // deal with possibility that angle might be 90 or -90 which leads to undefined tan output
+        if (Convert.ToDouble(angle) == 90 || Convert.ToDouble(angle) == -90) {
+            // check if edge is horizontal
+            if (Convert.ToDouble(node1Y) == Convert.ToDouble(node2Y)) {
+                // door angle is straight up or down and the edge is exactly horizontal
+                xIntercept = roomX;
+                yIntercept = node1Y;
+            }
+            else {
+                // edge is not perpendicular but room connector goes straight up
+                // really should never execute, but have to code to be safe
+                // derived from equation for a line
+                // m1 is gradient of the edge
+                double m1 = (Convert.ToDouble(node1Y) - Convert.ToDouble(node2Y)) / (Convert.ToDouble(node1X) - Convert.ToDouble(node2X));
+                xIntercept = Convert.ToDouble(roomX);
+                yIntercept = m1*(xIntercept - Convert.ToDouble(node1X)) + Convert.ToDouble(node1Y);
+            }
+        }
+        // deal with possibility that edge angle might be 0 or 180 which leads to infinite edge gradient
+        else if (Convert.ToDouble(angle) == 0 || Convert.ToDouble(angle) == 180) {
+            // check if edge is vertical
+            if (Convert.ToDouble(node1X) == Convert.ToDouble(node2X)) {
+                // door angle is straight left or right and the edge is exactly vertical
+                xIntercept = node1X;
+                yIntercept = roomY;
+            }
+            else {
+                //Debug.Log(roomEdgeValues[i][0] + " " + roomEdgeValues[i][2]);
+                //Debug.Log("Error: room connector is vertical but edge is not");
+                xIntercept = double.NaN;
+                yIntercept = double.NaN;
+            }
+        }
+        else {
+            // derived from equation for a line
+            // m1 is gradient of the edge
+            double m1 = (Convert.ToDouble(node1Y) - Convert.ToDouble(node2Y)) / (Convert.ToDouble(node1X) - Convert.ToDouble(node2X));
+            
+            // m2 is gradient of the room connector
+            double m2 = Convert.ToDouble(MathF.Tan(Convert.ToSingle(angle)*MathF.PI/180));
+
+            xIntercept = (m1*Convert.ToDouble(node1X) - m2*Convert.ToDouble(roomX) + Convert.ToDouble(roomY) - Convert.ToDouble(node1Y)) / (m1 - m2);
+            yIntercept = m1*(xIntercept - Convert.ToDouble(node1X)) + Convert.ToDouble(node1Y);
+        }
+
+        return (xIntercept, yIntercept);
+    }
+
 }
