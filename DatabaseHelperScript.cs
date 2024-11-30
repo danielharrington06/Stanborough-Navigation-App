@@ -489,8 +489,8 @@ public class DatabaseHelperScript : MonoBehaviour
         //iterate through room edge values, finding the intersection points and filling them in
         for (int i = 0; i < numEdgeConnects; i++) {
 
-            var (xIntercept, yIntercept) = CalcIntersectionOfEdgeAndRoomConnector(Convert.ToDouble(roomEdgeValues[0]), Convert.ToDouble(roomEdgeValues[1]), Convert.ToDouble(roomEdgeValues[2]), Convert.ToDouble(roomEdgeValues[3]), Convert.ToDouble(roomEdgeValues[4]), Convert.ToDouble(roomEdgeValues[5]), Convert.ToDouble(roomEdgeValues[6]));
-            
+            var (xIntercept, yIntercept) = CalcIntersectionOfEdgeAndRoomConnector(Convert.ToDouble(roomEdgeValues[i][0]), Convert.ToDouble(roomEdgeValues[i][1]), Convert.ToDouble(roomEdgeValues[i][2]), Convert.ToDouble(roomEdgeValues[i][3]), Convert.ToDouble(roomEdgeValues[i][4]), Convert.ToDouble(roomEdgeValues[i][5]), Convert.ToDouble(roomEdgeValues[i][6]));
+
             //update connectors array
             connectors[i, 0] = Convert.ToDouble(roomEdgeValues[i][4]);
             connectors[i, 1] = Convert.ToDouble(roomEdgeValues[i][5]);
