@@ -202,22 +202,6 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This function uses SQL to get the number of nodes in tblnode.
-    */
-    public int GetNumberOfEdges() {
-        
-        return Convert.ToInt32(ExecuteScalarSelect("SELECT Count(edge_id) FROM tbledge"));
-    }
-
-    /**
-    This function uses SQL to get all nodes in tblnode.
-    */
-    public (List<string>, List<List<object>>) GetNodes() {
-
-        return ExecuteSelect("SELECT * FROM tblnode");
-    }
-
-    /**
     This function uses SQL to get all the nodes in the database so that their id and index can be used appropriately.
     */
     public int[] GetNodeIDsInDatabase() {
@@ -236,14 +220,6 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This function uses SQL to get all records in tbledge.
-    */
-    public (List<string>, List<List<object>>) GetEdges() {
-
-        return ExecuteSelect("SELECT * FROM tbledge");
-    }
-
-    /**
     This function uses SQL to return the node_1_id, node_2_id, weight, edge_type_id from the database 
     so the distance and info matrices can be built.
     */
@@ -259,7 +235,7 @@ public class DatabaseHelperScript : MonoBehaviour
 
         for (int i = 0; i < numberOfEdges; i++) {
             for (int j = 0; j < 4; j++) {
-                edgeInfo[i,j] = Convert.ToString(edgeValues[i][j]);
+                edgeInfo[i,j] = Convert.ToString(edgeValues[i][j]) + "";
             }
         }
 
@@ -282,47 +258,18 @@ public class DatabaseHelperScript : MonoBehaviour
 
         for (int i = 0; i < numberOfEdges; i++) {
             for (int j = 0; j < 2; j++) {
-                edgeInfo[i,j] = Convert.ToString(edgeValues[i][j]);
+                edgeInfo[i,j] = Convert.ToString(edgeValues[i][j]) + "";
             }
         }
 
         return edgeInfo;
     }
 
-
-
-    /**
-    This function uses SQL to get all edges that are one way
-    */
-    public (List<string>, List<List<object>>) GetOneWayEdges() {
-
-        return ExecuteSelect("SELECT * FROM tbledge WHERE one_way = true");
-    }
-    
-    /**
-    This function uses SQL to get all edge ID's
-    */
-    public int[] GetEdgeIDs() {
-
-        // query db
-        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id from tblEdge order by edge_id asc");
-        int numberOfEdges = edgeValues.Count;
-
-        // return array
-        int[] edgeIDs = new int[numberOfEdges];
-
-        for (int i = 0; i < numberOfEdges; i++) {
-            edgeIDs[i] = Convert.ToInt32(edgeValues[i][0]);
-        }
-
-        return edgeIDs;
-    }
-
     /**
     This function uses SQL to source the boolean value controlling whether the time of day
     can be used in calculations for estimations of time.
     */
-    public bool GetTimeOfDayDB() {
+    public bool GetUseTimeOfDayDB() {
         double boolValue = ExecuteScalarSelect("SELECT setting_value FROM tblsetting WHERE setting_name = \"useTimeOfDayForCalculationDB\"");
         if (boolValue == 0 || boolValue == 1) {
             return Convert.ToBoolean(boolValue);

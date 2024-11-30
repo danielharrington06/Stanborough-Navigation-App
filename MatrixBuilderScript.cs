@@ -57,7 +57,7 @@ public class MatrixBuilderScript : MonoBehaviour
 
         // now check settings
         useTimeOfDayForCalculationUser = true; // sourced from user settings
-        useTimeOfDayForCalculationDB = databaseHelper.GetTimeOfDayDB(); // sourced from DB settings
+        useTimeOfDayForCalculationDB = databaseHelper.GetUseTimeOfDayDB(); // sourced from DB settings
 
         // if DB sets it as false, then it is false, otherwise, follow user's settings
         // this is just 'and' gate

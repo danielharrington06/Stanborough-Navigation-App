@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MapMeshGenerator : MonoBehaviour
+public class MapMeshRenderer : MonoBehaviour
 {
     Mesh mesh;
     [SerializeField] private DatabaseHelperScript databaseHelper;
