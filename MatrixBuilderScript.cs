@@ -7,6 +7,8 @@ using UnityEngine;
 public class MatrixBuilderScript : MonoBehaviour
 {
     // fields
+    [SerializeField] private DatabaseHelperScript databaseHelper;
+
     private double[,] edgeVelocities = new double[5, 2];
     private char[] edgeTypes = new char[5];
 
@@ -30,19 +32,18 @@ public class MatrixBuilderScript : MonoBehaviour
 
     public int numberOfNodes {get; private set;}
 
-    [SerializeField] private DatabaseHelperScript databaseHelper;
-
     Stopwatch stopwatch = new Stopwatch();
     
 
-    // constructors
-    public MatrixBuilderScript() {
+    // constructor
+    void Start() {
         
         // write edge types for array
         edgeTypes = new char[5] {'O', 'I', 'C', 'S', 'L'};
 
         // get velocities
         // go through all 5 x 2 values and place in edge Velocities from DB
+        
         edgeVelocities[0, 0] = databaseHelper.GetVelocityValue(edgeTypes[0], false); // outside normal
         edgeVelocities[0, 1] = databaseHelper.GetVelocityValue(edgeTypes[0], true); // outside slow
         edgeVelocities[1, 0] = databaseHelper.GetVelocityValue(edgeTypes[1], false); // inside normal
@@ -78,7 +79,11 @@ public class MatrixBuilderScript : MonoBehaviour
         timeMatrixDefault = new double[numberOfNodes, numberOfNodes];
 
         timeMatrixStairsLifts = new double[numberOfNodes, numberOfNodes];
+
+        // now setup matrices
+        BuildMatricesForPathfinding();
     }
+
 
     // methods
 
