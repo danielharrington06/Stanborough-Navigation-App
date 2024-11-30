@@ -91,118 +91,90 @@ public class MatrixBuilderScript : MonoBehaviour
     This function calls functions that queries the database to create the non directional
     dist dist matrix and info matrix used by the program to create a time dist matrix.
     */
-    public (int[], double[,], char[,]) BuildNormalMatrices() {
+    public void BuildNormalMatrices() {
 
         // get number of nodes so a n x n matrix array can be defined
         int numberOfNodes = databaseHelper.GetNumberOfNodes();
 
         // make node array
-        int[] nodeArray = new int[numberOfNodes];
-        var (nodeFields, nodeValues) = databaseHelper.GetNodes();
-
-        // just in case the order has been changed, get index manually
-        int nodeIndex = nodeFields.IndexOf("node_id");
-        
-        // now loop through nodeValues and put value in nodeArray
-        for (int i = 0; i < numberOfNodes; i++) {
-            
-            nodeArray[i] = Convert.ToInt32(nodeValues[i][nodeIndex]);
-        }
+        nodesForMatrix = databaseHelper.GetNodeIDsInDatabase();
 
         // initialise distance matrix
-        double[,] distanceMatrix = new double[numberOfNodes, numberOfNodes];
+        distanceMatrixDefault = new double[numberOfNodes, numberOfNodes];
 
         // initialise info matrix
-        char[,] infoMatrix = new char[numberOfNodes, numberOfNodes];
+        infoMatrixDefault = new char[numberOfNodes, numberOfNodes];
 
-        // query db for all edges
-        var (edgeFields, edgeValues) = databaseHelper.GetEdges();
-
-        //get number of times need to loop from the edgeValues
-        int numberOfEdges = edgeValues.Count;
-
-        // just in case the order has been changed, get indexes manually
-        int node1FieldIndex = edgeFields.IndexOf("node_1_id");
-        int node2FieldIndex = edgeFields.IndexOf("node_2_id");
-        int weightFieldIndex = edgeFields.IndexOf("weight");
-        int infoFieldIndex = edgeFields.IndexOf("edge_type_id");
+        string[,] edgeInfo = databaseHelper.GetEdgesToBuildMatrices();
+        int numberOfEdges = edgeInfo.GetLength(0);
 
         // loop through edges and update matrix
         for (int i = 0; i < numberOfEdges; i++) {
 
             // get node id from edge values
-            int node1ID = Convert.ToInt32(edgeValues[i][node1FieldIndex]); // returns a node id
-            int node2ID = Convert.ToInt32(edgeValues[i][node2FieldIndex]); // returns a node id
+            int node1ID = Convert.ToInt32(edgeInfo[i, 0]); // returns a node id
+            int node2ID = Convert.ToInt32(edgeInfo[i, 1]); // returns a node id
 
             // get node index from node array
-            int node1Index = Array.IndexOf(nodeArray, node1ID);
-            int node2Index = Array.IndexOf(nodeArray, node2ID);
+            int node1Index = Array.IndexOf(nodesForMatrix, node1ID);
+            int node2Index = Array.IndexOf(nodesForMatrix, node2ID);
 
             // get weight value from edge values
-            double weightVal = Math.Round(Convert.ToDouble(edgeValues[i][weightFieldIndex]), 1);
+            double weightVal = Math.Round(Convert.ToDouble(edgeInfo[i, 2]), 1);
 
             // get edge type / info value from edge values
-            char infoVal = Convert.ToChar(edgeValues[i][infoFieldIndex]);
+            char infoVal = Convert.ToChar(edgeInfo[i, 3]);
                                  
             // now update matrices
 
             // put in both 1, 2 and 2, 1 because non directional            
-            distanceMatrix[node1Index, node2Index] = weightVal;
-            distanceMatrix[node2Index, node1Index] = weightVal;
+            distanceMatrixDefault[node1Index, node2Index] = weightVal;
+            distanceMatrixDefault[node2Index, node1Index] = weightVal;
 
             // put in both 1, 2 and 2, 1 because non directional            
-            infoMatrix[node1Index, node2Index] = infoVal;
-            infoMatrix[node2Index, node1Index] = infoVal;
+            infoMatrixDefault[node1Index, node2Index] = infoVal;
+            infoMatrixDefault[node2Index, node1Index] = infoVal;
         }
 
         // go through info matrix and change values to '0'
         for (int i = 0; i < numberOfNodes; i++) {
             for (int j = 0; j < numberOfNodes; j++) {
-                if (infoMatrix[i, j] == '\0') {
-                    infoMatrix[i, j] = '0';
+                if (infoMatrixDefault[i, j] == '\0') {
+                    infoMatrixDefault[i, j] = '0';
                 }
             }
-        }     
-
-        return (nodeArray, distanceMatrix, infoMatrix);
+        }
     }
 
     /**
     This function takes the results of the above function (node array, dist matrix, info amatrix)
     and sets all values to zero where the one way system applies.
     */
-    public (double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] distanceMatrix, char[,] infoMatrix) {
+    public void BuildOWSMatrices() {
 
         // clone matrices as they got passed by ref not by val
-        var distanceMatrixOneWay = (double[,])distanceMatrix.Clone();
-        var infoMatrixOneWay = (char[,])infoMatrix.Clone();
+        distanceMatrixOneWay = (double[,])distanceMatrixDefault.Clone();
+        infoMatrixOneWay = (char[,])infoMatrixDefault.Clone();
 
         // get all one-way edges from db
-        var (edgeFields, edgeValues) = databaseHelper.GetOneWayEdges();
-
-        //get number of times need to loop from the edgeValues
-        int numberOfEdges = edgeValues.Count;
-
-        // just in case the order has been changed, get indexes manually
-        int node1FieldIndex = edgeFields.IndexOf("node_1_id");
-        int node2FieldIndex = edgeFields.IndexOf("node_2_id");
+        string[,] edgeInfo = databaseHelper.GetOneWayEdgesToBuildMatrix();
+        int numberOfEdges = edgeInfo.GetLength(0);
 
         for (int i = 0; i < numberOfEdges; i++) {
 
             // get node id from edge values
-            int node1ID = Convert.ToInt32(edgeValues[i][node1FieldIndex]); // returns a node id
-            int node2ID = Convert.ToInt32(edgeValues[i][node2FieldIndex]); // returns a node id
+            int node1ID = Convert.ToInt32(edgeInfo[i, 0]); // returns a node id
+            int node2ID = Convert.ToInt32(edgeInfo[i, 1]); // returns a node id
 
             // get node index from node array
-            int node1Index = Array.IndexOf(nodeArray, node1ID);
-            int node2Index = Array.IndexOf(nodeArray, node2ID);
+            int node1Index = Array.IndexOf(nodesForMatrix, node1ID);
+            int node2Index = Array.IndexOf(nodesForMatrix, node2ID);
 
             // set the edge from node 2 to node 1 to 0 in matrices
+            // because in db, one-way is defined as one-way from 1 to 2
             distanceMatrixOneWay[node2Index, node1Index] = 0;
             infoMatrixOneWay[node2Index, node1Index] = '0';
-        } 
-
-        return (distanceMatrixOneWay, infoMatrixOneWay);
+        }
     }
 
     /**
@@ -341,13 +313,8 @@ public class MatrixBuilderScript : MonoBehaviour
         // start stopwatch
         stopwatch.Start();
 
-        var(nfm, dmn, imn) = BuildNormalMatrices();
-        nodesForMatrix = nfm;
-        distanceMatrixDefault = dmn;
-        infoMatrixDefault = imn;
-        var(dmows, imows) = BuildOWSMatrices(nodesForMatrix, distanceMatrixDefault, infoMatrixDefault);
-        distanceMatrixOneWay = dmows;
-        infoMatrixOneWay = imows;
+        BuildNormalMatrices();
+        BuildOWSMatrices();
         timeMatrixDefault = ConfigureTimeMatrix(distanceMatrixDefault, infoMatrixDefault);
         if (!stepFree) {
             timeMatrixStairsLifts = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixOneWay, infoMatrixOneWay), infoMatrixOneWay);

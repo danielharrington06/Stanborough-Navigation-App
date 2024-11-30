@@ -41,9 +41,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     public Stopwatch stopwatch = new Stopwatch();
 
-    // constructors
-
-    // if database    
+    // constructor
     void Start(){
 
         // need to get from db
@@ -82,7 +80,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     }
 
     void Update() {
-        
+
     }
     // methods
 

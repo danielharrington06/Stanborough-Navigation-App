@@ -218,12 +218,78 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
+    This function uses SQL to get all the nodes in the database so that their id and index can be used appropriately.
+    */
+    public int[] GetNodeIDsInDatabase() {
+
+        var (nodeFields, nodeValues)  = ExecuteSelect("SELECT node_id FROM tblnode");
+
+        int[] nodeArray = new int[nodeValues.Count];
+
+        // now loop through nodeValues and put value in nodeArray
+        for (int i = 0; i < nodeValues.Count; i++) {
+            
+            nodeArray[i] = Convert.ToInt32(nodeValues[i][0]);
+        }
+
+        return nodeArray;
+    }
+
+    /**
     This function uses SQL to get all records in tbledge.
     */
     public (List<string>, List<List<object>>) GetEdges() {
 
         return ExecuteSelect("SELECT * FROM tbledge");
     }
+
+    /**
+    This function uses SQL to return the node_1_id, node_2_id, weight, edge_type_id from the database 
+    so the distance and info matrices can be built.
+    */
+    public string[,] GetEdgesToBuildMatrices() {
+
+        // query db for all edges
+        var (edgeFields, edgeValues) = ExecuteSelect("SELECT node_1_id, node_2_id, weight, edge_type_id FROM tbledge");
+
+        //get number of times need to loop from the edgeValues
+        int numberOfEdges = edgeValues.Count;
+
+        string[,] edgeInfo = new string[numberOfEdges,4];
+
+        for (int i = 0; i < numberOfEdges; i++) {
+            for (int j = 0; j < 4; j++) {
+                edgeInfo[i,j] = Convert.ToString(edgeValues[i][j]);
+            }
+        }
+
+        return edgeInfo;
+    }
+
+    /**
+    This function uses SQL to get the same information as above to build the one-way matrices by removing
+    the data found with this function as appropriate.
+    The only fields needed are the node_id's as this is what is needed to remove from the matrix.
+    */
+    public string[,] GetOneWayEdgesToBuildMatrix() {
+        // query db for all edges
+        var (edgeFields, edgeValues) = ExecuteSelect("SELECT node_1_id, node_2_id FROM tbledge WHERE one_way = true");
+
+        //get number of times need to loop from the edgeValues
+        int numberOfEdges = edgeValues.Count;
+
+        string[,] edgeInfo = new string[numberOfEdges,2];
+
+        for (int i = 0; i < numberOfEdges; i++) {
+            for (int j = 0; j < 2; j++) {
+                edgeInfo[i,j] = Convert.ToString(edgeValues[i][j]);
+            }
+        }
+
+        return edgeInfo;
+    }
+
+
 
     /**
     This function uses SQL to get all edges that are one way
