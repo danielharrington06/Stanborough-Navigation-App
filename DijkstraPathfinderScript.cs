@@ -39,10 +39,25 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     public double estimatedDistance;
 
+    public bool showResults;
+
     public Stopwatch stopwatch = new Stopwatch();
 
     // constructor
     void Start(){
+
+        ResetFields();
+    }
+
+    void Update() {
+
+    }
+    // methods
+
+    /**
+    This function will reset all the variables so can be used in Start and before pathfinding.
+    */
+    public void ResetFields() {
 
         // need to get from db
         timeSecsModifier = 0;
@@ -77,12 +92,10 @@ public class DijkstraPathfinderScript : MonoBehaviour
         floor1Path = new List<double[]>();
 
         estimatedDistance = 0;
-    }
 
-    void Update() {
+        showResults = false;
 
     }
-    // methods
 
     /**
     This function carries out Dijkstra's Algorithm to finds the shortest path between a start node and every other node.
@@ -652,6 +665,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public void CarryOutAndInterpretPathfinding(string sR, string tR) {
 
+        ResetFields();
+
         // set fields startRoom and targetRoom
         startRoom = sR;
         targetRoom = tR;
@@ -1023,6 +1038,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else {
             Console.WriteLine("This should never execute. If it does, there is a pathway in the nested if's above that leads to method not being assigned.");
         }
+
+        showResults = true;
 
         //end stopwatch
         stopwatch.Stop();
