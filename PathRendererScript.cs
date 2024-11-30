@@ -23,12 +23,12 @@ public class PathRendererScript : MonoBehaviour
     }
 
     void Update() {
-        floor = userSettings.floor;
 
         // check if showResults in dp is different from draw Path
         // if so, set drawPath as apprpriate and then change path edges
         // only draw/clear path when dijkstra starts or ends or is defocussed
-        if (dijkstraPathfinder.showResults != drawPath) {
+        if (dijkstraPathfinder.showResults != drawPath || userSettings.floor != floor) {
+            floor = userSettings.floor;
             drawPath = dijkstraPathfinder.showResults;
             if (drawPath == true) {
                 // draw path
@@ -43,25 +43,6 @@ public class PathRendererScript : MonoBehaviour
 
     void DrawPath() {
 
-        linePoints = GetLinePoints();
-        lineTriangles = GetLineTriangles(linePoints);
-        // now draw on mesh
-        mesh.Clear();
-        mesh.vertices = linePoints;
-        mesh.triangles = lineTriangles;
-
-        // create an array of colors and assign to each vertex
-        Color[] colors = new Color[linePoints.Length];
-        for (int i = 0; i < colors.Length; i++) {
-            colors[i] = lineColour;
-        }
-        mesh.colors = colors;
-    }
-    
-    Vector3[] GetLinePoints() {
-
-        List<Vector3> points = new List<Vector3>();
-
         // get the correct set of coordinates from dijkstra pathfinder
         List<double[]> pathCoordinates;
         if (floor == false) { // floor 0
@@ -70,6 +51,33 @@ public class PathRendererScript : MonoBehaviour
         else { // floor1
             pathCoordinates = dijkstraPathfinder.floor1Path;
         }
+
+        // check if no coordinates as otherwise there are errors
+        if (pathCoordinates.Count == 0) {
+            // just clear the mesh
+            mesh.Clear();
+        }
+        else {
+            // do normal thing
+            linePoints = GetLinePoints(pathCoordinates);
+            lineTriangles = GetLineTriangles(linePoints);
+            // now draw on mesh
+            mesh.Clear();
+            mesh.vertices = linePoints;
+            mesh.triangles = lineTriangles;
+    
+            // create an array of colors and assign to each vertex
+            Color[] colors = new Color[linePoints.Length];
+            for (int i = 0; i < colors.Length; i++) {
+                colors[i] = lineColour;
+            }
+            mesh.colors = colors;
+        }
+    }
+    
+    Vector3[] GetLinePoints(List<double[]> pathCoordinates) {
+
+        List<Vector3> points = new List<Vector3>();
 
         double[,] pathEdges = new double[pathCoordinates.Count-1, 4];
 

@@ -10,6 +10,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     // fields
     [SerializeField] private MatrixBuilderScript matrixBuilder;
     [SerializeField] private DatabaseHelperScript databaseHelper;
+    [SerializeField] private PathRendererScript pathRenderer;
 
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
     
@@ -23,8 +24,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public int startNode; // node id from nodesForMatrix
     public int targetNode; // node id from nodesForMatrix
 
-    private string startRoom;
-    private string targetRoom;
+    public string startRoom;
+    public string targetRoom;
 
     private double[] dijkstraDistances;
 
@@ -42,14 +43,28 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public bool showResults;
 
     public Stopwatch stopwatch = new Stopwatch();
+    public bool startDijkstra = false;
 
     // constructor
     void Start(){
 
         ResetFields();
+
+        /* startRoom = "";
+        targetRoom = ""; */
     }
 
     void Update() {
+
+        if (startDijkstra == true && startRoom != "" && targetRoom != "") {
+            showResults = false;
+            pathRenderer.drawPath = false;
+            CarryOutAndInterpretPathfinding(startRoom, targetRoom);
+
+            UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
+            
+        }
+        startDijkstra = false;
 
     }
     // methods
@@ -80,9 +95,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
         startNode = -1; // get from user interface stuff
         targetNode = -1; // get from user interface stuff
 
-        startRoom = "";
-        targetRoom = "";
-
         dijkstraDistances = new double[numberOfNodes];
         estimatedTime = new TimeSpan(0, 0, 0);
         estimatedTimeOfArrival = new TimeSpan(0, 0, 0);
@@ -94,6 +106,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
         estimatedDistance = 0;
 
         showResults = false;
+
+        stopwatch.Reset();
 
     }
 

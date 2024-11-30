@@ -166,12 +166,16 @@ public class DatabaseHelperScript : MonoBehaviour
         if (OpenConnection() == true) {
             // create mysql command
             MySqlCommand command = new MySqlCommand(query, connection);
+
             // execute scalar will only return one value
-            scalarValue = double.Parse(command.ExecuteScalar()+"");
+            object result = command.ExecuteScalar();
+            if (result != null) {
+                scalarValue = double.Parse(result+"");
+            }
+
             // close connection
             CloseConnection();
-
-        }
+            }
 
         return scalarValue;
     }
