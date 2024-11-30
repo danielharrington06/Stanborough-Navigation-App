@@ -565,4 +565,177 @@ public class DatabaseHelperScript : MonoBehaviour
         return (xIntercept, yIntercept);
     }
 
+    /**
+    This function uses SQL to get the room_id, node_id, edge_id for a roomID.
+    It will be used to figure out if a room is connected to node or edge.
+    */
+    public string[] GetRoomConnectionType(string room_id) {
+
+        // query db
+        var (roomFields, roomValues) = ExecuteSelect("select room_id, edge_id, node_id from tblRoom where room_id = \"" + room_id + "\"");
+
+        // now format for return
+        string[] roomInfo = new string[3];
+        roomInfo[0] = "" + Convert.ToString(roomValues[0][0]);
+        roomInfo[1] = "" + Convert.ToString(roomValues[0][1]);
+        roomInfo[2] = "" + Convert.ToString(roomValues[0][2]);
+
+        return roomInfo;
+    }
+
+    /**
+    This function uses SQL to get an edge's record
+    */
+    public string[] GetEdgeRecord(int edge_id) {
+
+        // query db
+        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id, node_1_id, node_2_id, weight, edge_type_id, one_way from tblEdge where edge_id = \"" + edge_id + "\"");
+
+        // now format for return
+        string[] edgeInfo = new string[6];
+        edgeInfo[0] = "" + Convert.ToString(edgeValues[0][0]);
+        edgeInfo[1] = "" + Convert.ToString(edgeValues[0][1]);
+        edgeInfo[2] = "" + Convert.ToString(edgeValues[0][2]);
+        edgeInfo[3] = "" + Convert.ToString(edgeValues[0][3]);
+        edgeInfo[4] = "" + Convert.ToString(edgeValues[0][4]);
+        edgeInfo[5] = "" + Convert.ToString(edgeValues[0][5]);
+
+        return edgeInfo;
+    }
+
+    /**
+    This function uses SQL to get an node's record
+    */
+    public string[] GetNodeRecord(int node_id) {
+
+        // query db
+        var (nodeFields, nodeValues) = ExecuteSelect("select node_id, x_coordinate, y_coordinate, floor, node_name, node_descript from tblNode where node_id = \"" + node_id + "\"");
+
+        // now format for return
+        string[] nodeInfo = new string[6];
+        nodeInfo[0] = "" + Convert.ToString(nodeValues[0][0]);
+        nodeInfo[1] = "" + Convert.ToString(nodeValues[0][1]);
+        nodeInfo[2] = "" + Convert.ToString(nodeValues[0][2]);
+        nodeInfo[3] = "" + Convert.ToString(nodeValues[0][3]);
+        nodeInfo[4] = "" + Convert.ToString(nodeValues[0][4]);
+        nodeInfo[5] = "" + Convert.ToString(nodeValues[0][5]);
+
+        return nodeInfo;
+    }
+
+    /**
+    This function uses SQL to get an node's record
+    */
+    public string[] GetRoomRecord(string room_id) {
+
+        // query db
+        var (roomFields, roomValues) = ExecuteSelect("select room_id, room_name, edge_id, node_id, x_coordinate, y_coordinate, door_angle, faculty_id, room_type from tblRoom where room_id = \"" + room_id + "\"");
+
+        // now format for return
+        string[] roomInfo = new string[9];
+        roomInfo[0] = "" + Convert.ToString(roomValues[0][0]);
+        roomInfo[1] = "" + Convert.ToString(roomValues[0][1]);
+        roomInfo[2] = "" + Convert.ToString(roomValues[0][2]);
+        roomInfo[3] = "" + Convert.ToString(roomValues[0][3]);
+        roomInfo[4] = "" + Convert.ToString(roomValues[0][4]);
+        roomInfo[5] = "" + Convert.ToString(roomValues[0][5]);
+        roomInfo[6] = "" + Convert.ToString(roomValues[0][6]);
+        roomInfo[7] = "" + Convert.ToString(roomValues[0][7]);
+        roomInfo[8] = "" + Convert.ToString(roomValues[0][8]);
+
+        return roomInfo;
+    }
+
+    /**
+    This function uses SQL to get the floor that a node is on
+    */
+    public int GetNodeFloor(int node_id) {
+        return Convert.ToInt32(ExecuteScalarSelect("select floor from tblnode where node_id = \"" + node_id + "\""));
+    }
+
+    /**
+    This function uses SQL to get the floor that a node is on. It works for rooms that are connected to nodes and edges.
+    */
+    public int GetRoomFloor(string room_id) {
+        string[] roomRecord = GetRoomRecord(room_id);
+        if (roomRecord[2] == "" && roomRecord[3] != "") {
+            // connected to node or is node
+            return Convert.ToInt32(ExecuteScalarSelect("select floor from tblroom inner join tblnode on tblroom.node_id = tblnode.node_id where room_id = \"" + room_id + "\""));
+
+        }
+        else if (roomRecord[2] != "" && roomRecord[3] == "") {
+            // connected to edge
+            return Convert.ToInt32(ExecuteScalarSelect("select floor from tblroom inner join tbledge on tbledge.edge_id = tblroom.edge_id inner join tblnode on tbledge.node_1_id = tblnode.node_id where room_id = \"" + room_id + "\""));
+        }
+        else {
+            return -1;
+        }
+    }
+    /**
+    This function uses SQL to get the coordinates of a node.
+    */
+    public double[] GetNodeCoordinates(int node_id) {
+        var(nodeFields, nodeValues) = ExecuteSelect("select x_coordinate, y_coordinate from tblnode where node_id = \"" + node_id + "\"");
+        return new double[] {Math.Round(Convert.ToDouble(nodeValues[0][0]), 3), Math.Round(Convert.ToDouble(nodeValues[0][1]), 3)};
+    }
+    
+    /**
+    This function uses SQL to get the coordinates of the edge and coordinates and angle of a room thats attached to an edge
+    */
+    public double[] GetRoomEdgeInfoForIntersection(string room_id) {
+        var (roomEdgeFields, roomEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate, tR.x_coordinate, tR.y_coordinate, tR.door_angle from tblRoom tR inner join tblEdge on tR.edge_id = tblEdge.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tR.door_angle is not null and tR.room_id = \"" + room_id + "\" order by tR.edge_id asc");
+
+        double[] result = new double[7];
+        result[0] = Convert.ToDouble(roomEdgeValues[0][0]);
+        result[1] = Convert.ToDouble(roomEdgeValues[0][1]);
+        result[2] = Convert.ToDouble(roomEdgeValues[0][2]);
+        result[3] = Convert.ToDouble(roomEdgeValues[0][3]);
+        result[4] = Convert.ToDouble(roomEdgeValues[0][4]);
+        result[5] = Convert.ToDouble(roomEdgeValues[0][5]);
+        result[6] = Convert.ToDouble(roomEdgeValues[0][6]);
+
+        return result;
+    }
+
+    /**
+    This function uses SQL to return the edge id if the given nodes have an edge that exists in tblEdgeVertex.
+    It returns -1 if no edge is found.
+    */
+    public int GetEdgeIfEdgeVerticesExist(int node_1_id, int node_2_id) {
+
+        // query db
+        return Convert.ToInt32(ExecuteScalarSelect("select distinct tblEdge.edge_id  from tblEdge inner join tblEdgeVertex on tblEdge.edge_id = tblEdgeVertex.edge_id where (node_1_id = " + node_1_id + " and node_2_id = " + node_2_id + ") or (node_1_id = " + node_2_id + " and node_2_id = " + node_1_id + ")"));
+
+    }
+
+    /**
+    This function gets all the edge vertices for a given edge and startnode, ordering them appropriately
+    */
+    public List<double[]> GetEdgeVertices(int edge_id, int node_id) {
+
+        string[] edgeRecord = GetEdgeRecord(edge_id);
+        //query db for edge vertices for the edge
+        // if the first specified node is the start node, the order will be correct in tbledgevertex, so ascending
+        // otherwise, use descending coordinateValues;
+        if (Convert.ToInt32(edgeRecord[1]) == node_id) {
+            // can use ascending order of "vertex_order"
+            var (coordinateFields, coordinateValues) = ExecuteSelect("select tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id where tblEdge.edge_id = " + edge_id + " order by vertex_order asc");
+            List<double[]> coordinates = new List<double[]>();
+            for (int i = 0; i < coordinateValues.Count; i++) {
+                coordinates.Add(new double[2] {Math.Round(Convert.ToDouble(coordinateValues[i][0]), 3), Math.Round(Convert.ToDouble(coordinateValues[i][1]), 3)});
+            }
+            return coordinates;
+        }
+        else {
+            // can use descending order of "vertex_order"
+            var (coordinateFields, coordinateValues) = ExecuteSelect("select tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id where tblEdge.edge_id = " + edge_id + " order by vertex_order desc");
+            List<double[]> coordinates = new List<double[]>();
+            for (int i = 0; i < coordinateValues.Count; i++) {
+                coordinates.Add(new double[2] {Math.Round(Convert.ToDouble(coordinateValues[i][0]), 3), Math.Round(Convert.ToDouble(coordinateValues[i][1]), 3)});
+            }
+            return coordinates;
+        }
+        // had to rewrite code as vs code wasn't convinced that coordinateValues would exist otherwise
+    }
+
 }
