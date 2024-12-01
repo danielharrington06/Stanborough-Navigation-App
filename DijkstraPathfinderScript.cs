@@ -28,8 +28,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public string startLocation; // node or room
     public string targetLocation; // node or room
 
-    private string startType; // "" if undefined, "N" if node, "RN" if room that is a node, "RCN" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
-    private string targetType; // "" if undefined, "N" if node, "RN" if room that is a node, "RCN" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
+    private string startType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
+    private string targetType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
 
     private double[] dijkstraDistances;
 
