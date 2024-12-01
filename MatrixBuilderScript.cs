@@ -64,7 +64,7 @@ public class MatrixBuilderScript : MonoBehaviour
         useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
 
         // get user settings for step free access
-        stepFree = false; // false means using stairs
+        stepFree = true; // false means using stairs
 
         // set non null values for array/matrices
         numberOfNodes = databaseHelper.GetNumberOfNodes();

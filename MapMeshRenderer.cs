@@ -26,10 +26,11 @@ public class MapMeshRenderer : MonoBehaviour
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
+        floor = userSettings.floor;
+        DrawLines();
     }
 
     void Update() {
-        floor = userSettings.floor;
         // check for a mouse click
         if (Input.GetMouseButtonDown(0)) {
 
@@ -42,7 +43,10 @@ public class MapMeshRenderer : MonoBehaviour
             // show click in unity console
             Debug.Log(worldClick);
         }
-        DrawLines();
+        if (userSettings.floor != floor) {
+            floor = userSettings.floor;
+            DrawLines();
+        }
     }
 
     void DrawLines() {

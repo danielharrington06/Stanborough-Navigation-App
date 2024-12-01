@@ -62,9 +62,10 @@ public class DijkstraPathfinderScript : MonoBehaviour
             CarryOutAndInterpretPathfinding(startRoom, targetRoom);
 
             UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
-            
         }
         startDijkstra = false;
+
+        
 
     }
     // methods
@@ -682,8 +683,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
         ResetFields();
 
         // set fields startRoom and targetRoom
-        startRoom = sR;
-        targetRoom = tR;
+        startRoom = sR.ToUpper();
+        targetRoom = tR.ToUpper();
 
         // time using stopwatch
         stopwatch.Start();
