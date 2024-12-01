@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
@@ -24,8 +25,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public int startNode; // node id from nodesForMatrix
     public int targetNode; // node id from nodesForMatrix
 
-    public string startRoom;
-    public string targetRoom;
+    public string startLocation; // node or room
+    public string targetLocation; // node or room
+
+    private string startType; // "" if undefined, "N" if node, "RN" if room that is a node, "RCN" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
+    private string targetType; // "" if undefined, "N" if node, "RN" if room that is a node, "RCN" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
 
     private double[] dijkstraDistances;
 
@@ -56,10 +60,10 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     void Update() {
 
-        if (startDijkstra == true && startRoom != "" && targetRoom != "") {
+        if (startDijkstra == true && startLocation != "" && targetLocation != "") {
             showResults = false;
             pathRenderer.drawPath = false;
-            CarryOutAndInterpretPathfinding(startRoom, targetRoom);
+            CarryOutAndInterpretPathfinding();
 
             UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
         }
@@ -103,6 +107,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
         dijkstraPath = new List<int>();
         floor0Path = new List<double[]>();
         floor1Path = new List<double[]>();
+
+        startType = "";
+        targetType = "";
 
         estimatedDistance = 0;
 
@@ -391,76 +398,92 @@ public class DijkstraPathfinderScript : MonoBehaviour
     A list of lists is returned where the first row is the possible nodes for the startRoom and the second row is the 
     possible nodes for the targetRoom.
     */
-    public List<List<int>> EvaluatePossibleNodes(string startRoom, string targetRoom) {
+    public List<List<int>> EvaluatePossibleNodes() {
 
-        // first deal with the startRoom
-        // query the db for room_id, edge_id, node_id from startRoom record
-        string[] startRoomRecord = databaseHelper.GetRoomRecord(startRoom);
+        // first deal with the startLocation
 
         // start list of possible nodes
-        List<int> startRoomPossNodes = new List<int>();
-        
-        // figure out if connected to node or edge
-        if (startRoomRecord[2] == "" && startRoomRecord[3] != "") {
-            // connected to node or is a node
-            startRoomPossNodes.Add(Convert.ToInt32(startRoomRecord[3]));
-            // this is the only possible node
-        }
-        else if (startRoomRecord[2] != "" && startRoomRecord[3] == "") {
-            // connected to edge
-            // query db for edge info to figure out if it is directional and the nodes
-            string[] startEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(startRoomRecord[2]));
-            
-            if (startEdgeInfo[5] == "True") { // directional edge 
-                // so use node 2 as only node as user can at first only walk from room to this edge
-                startRoomPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
-            }
-            else { // non directional
-                // so user can leave room and go to either node
-                startRoomPossNodes.Add(Convert.ToInt32(startEdgeInfo[1]));
-                startRoomPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
-            }
-        }
+        List<int> startLocationPossNodes = new List<int>();
 
-        // now deal with the targetRoom
-        // query the db for room_id, edge_id, node_id from startRoom record
-        string[] targetRoomRecord = databaseHelper.GetRoomRecord(targetRoom);
-
-        // start list of possible nodes
-        List<int> targetRoomPossNodes = new List<int>();
-        
-        // figure out if connected to node or edge
-        if (targetRoomRecord[2] == "" && targetRoomRecord[3] != "") {
-            // connected to node or is a node
-            targetRoomPossNodes.Add(Convert.ToInt32(targetRoomRecord[3]));
-            // this is the only possible node
+        // if node, just do the int of the node
+        if (startType == "N") {
+            startLocationPossNodes.Add(Convert.ToInt32(startLocation));
         }
-        else if (targetRoomRecord[2] != "" && targetRoomRecord[3] == "") {
-            // connected to edge
-            // query db for edge info to figure out if it is directional and the nodes
-            string[] targetEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(targetRoomRecord[2]));
+        else {
+            // query the db for room_id, edge_id, node_id from startRoom record
+            string[] startRoomRecord = databaseHelper.GetRoomRecord(startLocation);
             
-            if (targetEdgeInfo[5] == "True") { // directional edge 
-                // so use node 2 as only node as user can only reach room through this node
-                targetRoomPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
+            // figure out if connected to node or edge
+            if (startRoomRecord[2] == "" && startRoomRecord[3] != "") {
+                // connected to node or is a node
+                startLocationPossNodes.Add(Convert.ToInt32(startRoomRecord[3]));
+                // this is the only possible node
             }
-            else { // non directional
-                // so user can reach room through either node
-                targetRoomPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
-                targetRoomPossNodes.Add(Convert.ToInt32(targetEdgeInfo[2]));
+            else if (startRoomRecord[2] != "" && startRoomRecord[3] == "") {
+                // connected to edge
+                // query db for edge info to figure out if it is directional and the nodes
+                string[] startEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(startRoomRecord[2]));
+                
+                if (startEdgeInfo[5] == "True") { // directional edge 
+                    // so use node 2 as only node as user can at first only walk from room to this edge
+                    startLocationPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
+                }
+                else { // non directional
+                    // so user can leave room and go to either node
+                    startLocationPossNodes.Add(Convert.ToInt32(startEdgeInfo[1]));
+                    startLocationPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
+                }
+            }
+        }
+            
+
+        // first deal with the targetLocation
+
+        // target list of possible nodes
+        List<int> targetLocationPossNodes = new List<int>();
+
+        // if node, just do the int of the node
+        if (targetType == "N") {
+            targetLocationPossNodes.Add(Convert.ToInt32(targetLocation));
+        }
+        else {
+            // query the db for room_id, edge_id, node_id from targetRoom record
+            string[] targetRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+            
+            // figure out if connected to node or edge
+            if (targetRoomRecord[2] == "" && targetRoomRecord[3] != "") {
+                // connected to node or is a node
+                targetLocationPossNodes.Add(Convert.ToInt32(targetRoomRecord[3]));
+                // this is the only possible node
+            }
+            else if (targetRoomRecord[2] != "" && targetRoomRecord[3] == "") {
+                // connected to edge
+                // query db for edge info to figure out if it is directional and the nodes
+                string[] targetEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(targetRoomRecord[2]));
+                
+                if (targetEdgeInfo[5] == "True") { // directional edge 
+                    // so use node 2 as only node as user can at first only walk from room to this edge
+                    targetLocationPossNodes.Add(Convert.ToInt32(targetEdgeInfo[2]));
+                }
+                else { // non directional
+                    // so user can leave room and go to either node
+                    targetLocationPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
+                    targetLocationPossNodes.Add(Convert.ToInt32(targetEdgeInfo[2]));
+                }
             }
         }
 
         List<List<int>> possibleNodes = new List<List<int>>
+
         {
             new List<int>(),
             new List<int>()
         };
-        for (int i = 0; i < startRoomPossNodes.Count; i++) {
-            possibleNodes[0].Add(startRoomPossNodes[i]);
+        for (int i = 0; i < startLocationPossNodes.Count; i++) {
+            possibleNodes[0].Add(startLocationPossNodes[i]);
         }
-        for (int i = 0; i < targetRoomPossNodes.Count; i++) {
-            possibleNodes[1].Add(targetRoomPossNodes[i]);
+        for (int i = 0; i < targetLocationPossNodes.Count; i++) {
+            possibleNodes[1].Add(targetLocationPossNodes[i]);
         }
 
         return possibleNodes;
@@ -678,66 +701,78 @@ public class DijkstraPathfinderScript : MonoBehaviour
     This procedure links together all of the necessary functions for carrying out Dijkstra's
     Algorithm for a typical user, including returning the time, eta, distance.
     */
-    public void CarryOutAndInterpretPathfinding(string sR, string tR) {
+    public void CarryOutAndInterpretPathfinding() {
 
         ResetFields();
 
         // set fields startRoom and targetRoom
-        startRoom = sR.ToUpper();
-        targetRoom = tR.ToUpper();
+        startLocation = startLocation.ToUpper();
+        targetLocation = targetLocation.ToUpper();
 
         // time using stopwatch
         stopwatch.Start();
 
+        // first figure out types for simplicity later
+        // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
+        // problem will be reported if undefined after this
+        startType = databaseHelper.GetLocationType(startLocation);
+        targetType = databaseHelper.GetLocationType(targetLocation);
+
+        // dea with "" being returned
+        if (startType == "") {
+            UnityEngine.Debug.Log($"Start Location {startLocation} was invalid.");
+            return;
+        }
+        else if (targetType == "") {
+            UnityEngine.Debug.Log($"Target Location {targetLocation} was invalid.");
+            return;
+        }
+
         // figure out which node
-        List<List<int>> possibleNodes = EvaluatePossibleNodes(startRoom, targetRoom);
-        DetermineStartAndTargetNodes(possibleNodes, startRoom, targetRoom);
+        List<List<int>> possibleNodes = EvaluatePossibleNodes();
+        DetermineStartAndTargetNodes(possibleNodes, startLocation, targetLocation);
 
         // define variable that represents the method that will be caried out
-        int method = -1; // -1 is undefined, 0 is normal from node to node, 1 is along an edge only
+        int method = 0; // -1 is undefined, 0 is normal from node to node, 1 is along an edge only
 
-        //figure out if the edge is the same for both
-        string[] sRoomRecord = databaseHelper.GetRoomRecord(startRoom);
-        string[] tRoomRecord = databaseHelper.GetRoomRecord(targetRoom);
+        // only method 1 if room that is connected to edge, on the same edge and...
+        // (edge is not one way or edge is one way and distance to the startroom from the edge startnode is less than to targetroom)
+        // only can check both are rooms (not nodes)
+        if (startType != "N" && targetType != "N") {
 
-        // make sure both rooms are attached to edges not nodes
-        if ((sRoomRecord[2] == "" && sRoomRecord[3] != "") || (tRoomRecord[2] == "" && tRoomRecord[3] != "")) {
-            // start is node or target is node
-            method = 0;
-        }
-        else {
-            // check if the same edge
-            if (sRoomRecord[2] == tRoomRecord[2]) {
-                // same edge so check if edge is one-way
-                string[] edgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(sRoomRecord[2]));
-                if (edgeRecord[5] == "False") {
-                    //not one-way
-                    // so can just go along edge
-                    method = 1;
-                }
-                else {
-                    // one-way so check if target is downstream
-                    int startNode = Convert.ToInt32(edgeRecord[1]); // start of one-way edge
+            // check if locations are rooms attached to edges
+            if (startType.Substring(0, 2) != "RN" && targetType.Substring(0, 2) != "RN") {
+                
+                // connected to edge, so check if same edge
+                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
 
-                    // find distance from start node to each
-                    double distSNode = EstimateNodeRoomDistance(startNode, startRoom);
-                    double distTNode = EstimateNodeRoomDistance(targetNode, targetRoom);
+                // check if the same edge
+                if (sRoomRecord[2] == tRoomRecord[2]) {
+                    // same edge so check if edge is one-way
 
-                    // check if distSNode < distTNode
-                    if (distSNode < distTNode) {
-                        // t node is downstream from s node, so can go along edge
-                        method = 1;
+                    if (startType == "RED") {
+                        // one-way so check if target is downstream
+
+                        // get edge record to find top of edge (most upstream part)
+                        string[] edgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(sRoomRecord[2]));
+                        int edgeTopNode = Convert.ToInt32(edgeRecord[1]); // start of one-way edge
+
+                        // find distance from edge start node to each
+                        double distSNode = EstimateNodeRoomDistance(edgeTopNode, startLocation);
+                        double distTNode = EstimateNodeRoomDistance(edgeTopNode, targetLocation);
+
+                        // check if distSNode < distTNode
+                        if (distSNode < distTNode) {
+                            // t node is downstream from s node, so can go along edge
+                            method = 1;
+                        }
                     }
                     else {
-                        // t node is upstream from s node, so would have to get to the end of the edge
-                        // and use dijkstras to find how to get to the start of the node in order to reach
-                        method = 0;
+                        // same edge and undirected, so go along edge
+                        method = 1;
                     }
                 }
-            }
-            else {
-                // not same edge, so method 0 (normal dijkstra)
-                method = 0;
             }
         }
 
@@ -768,38 +803,42 @@ public class DijkstraPathfinderScript : MonoBehaviour
             double sRoomTime;
             double tRoomTime;
         
-            // figure out start room first      
-            if (sRoomRecord[2] == "" && sRoomRecord[3] != "") {
+            // figure out start room first  
+            if (startType.Substring(0, 2) == "RN") {
                 // room is node or is connected to node so no need to add anything to time or distance
                 sRoomDistance = 0;
                 sRoomTime = 0;
 
             }
-            else if (sRoomRecord[2] != "" && sRoomRecord[3] == "") {
+            else if (startType.Substring(0, 2) == "RE") {
                 // room is connected to edge so add distance from room to startnode
+                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
                 string[] sEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(sRoomRecord[2]));
-                sRoomDistance = EstimateNodeRoomDistance(startNode, startRoom);
+                sRoomDistance = EstimateNodeRoomDistance(startNode, startLocation);
                 sRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(sEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
             }
             else{
+                // node
                 sRoomDistance = 0;
                 sRoomTime = 0;
             }
 
-            // figure out target room next
-            if (tRoomRecord[2] == "" && tRoomRecord[3] != "") {
+            // figure out start room first  
+            if (targetType.Substring(0, 2) == "RN") {
                 // room is node or is connected to node so no need to add anything to time or distance
                 tRoomDistance = 0;
                 tRoomTime = 0;
 
             }
-            else if (tRoomRecord[2] != "" && tRoomRecord[3] == "") {
-                // room is connected to edge so add distance from room to targetNode
+            else if (targetType.Substring(0, 2) == "RE") {
+                // room is connected to edge so add distance from room to startnode
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
                 string[] tEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(tRoomRecord[2]));
-                tRoomDistance = EstimateNodeRoomDistance(targetNode, targetRoom);
-                tRoomTime = matrixBuilder.EstimateTimeFromDistance(tRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
+                tRoomDistance = EstimateNodeRoomDistance(startNode, startLocation);
+                tRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
             }
-            else {
+            else{
+                // node
                 tRoomDistance = 0;
                 tRoomTime = 0;
             }
@@ -816,45 +855,53 @@ public class DijkstraPathfinderScript : MonoBehaviour
             floor0Path = new List<double[]>();
             floor1Path = new List<double[]>();
 
-            // deal with start
-            if (sRoomRecord[2] == "" && sRoomRecord[3] != "") {
-                // attached to a node or is a node
-                if (sRoomRecord[4] == "" || sRoomRecord[5] == "") {
-                    // no coordinates specified so room is the node
-                    // do not add coordinates
+            // deal with start location first
+
+            if (startType == "N") {
+                // is a node
+                // so coordinates covered with dijstra path
+            }
+            else if (startType == "RN") {
+                // is a room node
+                // so coordinates covered with dijstra path
+            }
+            else if (startType == "RNC") {
+                // room is connected to node
+                // add coordinates of room
+                // get record to get coordinates
+                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+                
+                // get start node record to check which floor it is on
+                if (databaseHelper.GetRoomFloor(startLocation) == 0) {
+                    // ground floor
+                    // add room door
+                    floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
                 }
-                else {
-                    // room is connected to node
-                    // add coordinates of room
-                    // get start node record to check which floor it is on
-                    if (databaseHelper.GetRoomFloor(startRoom) == 0) {
-                        // ground floor
-                        // add room door
-                        floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
-                    }
-                    else if (databaseHelper.GetRoomFloor(startRoom) == 1) {
-                        // first floor
-                        // add room door
-                        floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
-                    }
+                else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
+                    // first floor
+                    // add room door
+                    floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
                 }
             }
-            else if (sRoomRecord[2] != "" && sRoomRecord[3] == "") {
+            else if (startType.Substring(0, 2) == "RE") {
                 // attached to an edge
                 // so add room coordinates and intersection coordinates
-                //have to do this to get 
-                if (databaseHelper.GetRoomFloor(startRoom) == 0) {
+                // get record to get coordinates
+                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+
+                // have to do this to get 
+                if (databaseHelper.GetRoomFloor(startLocation) == 0) {
                     // ground floor
                     // add room door and edge intersection
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startRoom);
+                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
                     var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                     floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
                     floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
                 }
-                else if (databaseHelper.GetRoomFloor(startRoom) == 1) {
+                else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
                     // first floor
                     // add room door and edge intersection
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startRoom);
+                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
                     var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                     floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
                     floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
@@ -862,6 +909,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
             }
 
             // add each node's coordinates in turn following dijkstra path
+
             for (int i = 0; i < dijkstraPath.Count; i++) {
                 //check which floor
                 if (databaseHelper.GetNodeFloor(dijkstraPath[i]) == 0) {
@@ -935,52 +983,61 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 }
             }
 
-            // then do similar thing to with start room but with target room
-            // deal with start
-            if (tRoomRecord[2] == "" && tRoomRecord[3] != "") {
-                // attached to a node or is a node
-                if (tRoomRecord[4] == "" || tRoomRecord[5] == "") {
-                    // no coordinates specified so room is the node
-                    // do not add coordinates
+
+            // finally deal with target location
+
+            if (targetType == "N") {
+                // is a node
+                // so coordinates covered with dijstra path
+            }
+            else if (targetType == "RN") {
+                // is a room node
+                // so coordinates covered with dijstra path
+            }
+            else if (targetType == "RNC") {
+                // room is connected to node
+                // add coordinates of room
+                // get record to get coordinates
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+                
+                // get start node record to check which floor it is on
+                if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
+                    // ground floor
+                    // add room door
+                    floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
                 }
-                else {
-                    // room is connected to node
-                    // add coordinates of room
-                    // get start node record to check which floor it is on
-                    if (databaseHelper.GetRoomFloor(targetRoom) == 0) {
-                        // ground floor
-                        // add room door
-                        floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
-                    }
-                    else if (databaseHelper.GetRoomFloor(targetRoom) == 1) {
-                        // first floor
-                        // add room door
-                        floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
-                    }
+                else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
+                    // first floor
+                    // add room door
+                    floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
                 }
             }
-            else if (tRoomRecord[2] != "" && tRoomRecord[3] == "") {
+            else if (startType.Substring(0, 2) == "RE") {
                 // attached to an edge
                 // so add room coordinates and intersection coordinates
-                //have to do this to get 
-                if (databaseHelper.GetRoomFloor(targetRoom) == 0) {
+                // get record to get coordinates
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+
+                // have to do this to get 
+                if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
                     // ground floor
-                    // add edge intersection and room door
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetRoom);
+                    // add room door and edge intersection
+                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
                     var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                     floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
                     floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
                 }
-                else if (databaseHelper.GetRoomFloor(targetRoom) == 1) {
+                else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
                     // first floor
-                    // add edge intersection and room door
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetRoom);
+                    // add room door and edge intersection
+                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
                     var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                     floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
                     floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
                 }
             }
         }
+
         // along edge only method
         else if (method == 1) {
             // work out distance from each room to the node that the room is closer to than the other
@@ -989,24 +1046,26 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // this is so that the distance between R1 and R2 can be found by subtracting both distances from the length of the edge
 
             // get edge record
+            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
             int edge = Convert.ToInt32(sRoomRecord[2]);
             string[] edgeRecord = databaseHelper.GetEdgeRecord(edge);
 
             // figure out which is closer to the first node in the edge record
-            double distNodeSRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startRoom);
-            double distNodeTRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetRoom);
+            double distNodeSRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startLocation);
+            double distNodeTRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetLocation);
 
             // now calculate distance from rooms to nodes
             double dist1, dist2;
             if (distNodeSRoom < distNodeTRoom) {
                 // Sroom and node 1, Troom and node2
-                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startRoom);
-                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), targetRoom);
+                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startLocation);
+                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), targetLocation);
             }
             else {
                 // Sroom and node2, Troom and node1
-                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), startRoom);
-                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetRoom);
+                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), startLocation);
+                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetLocation);
             }
 
             // and then estimated distance
@@ -1023,26 +1082,26 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
             // now find floor0Path and floor1Path
             // both are on the same floor
-            if (databaseHelper.GetRoomFloor(startRoom) == 0) {
+            if (databaseHelper.GetRoomFloor(startLocation) == 0) {
                     // ground floor
                     // add s room door, s intersection, t intersection, s room door
                     floor0Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
-                    double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startRoom);
+                    double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
                     var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
                     floor0Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
-                    double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetRoom);
+                    double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
                     var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
                     floor0Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
                     floor0Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
                 }
-                else if (databaseHelper.GetRoomFloor(startRoom) == 1) {
+                else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
                     // first floor
                     // add s room door, s intersection, t intersection, s room door
                     floor1Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
-                    double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startRoom);
+                    double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
                     var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
                     floor1Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
-                    double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetRoom);
+                    double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
                     var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
                     floor1Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
                     floor1Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
@@ -1067,8 +1126,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public void ShowPathfindingResults() {
 
-        Console.WriteLine($"Start Room: {startRoom}");
-        Console.WriteLine($"Target Room: {targetRoom}\n");
+        Console.WriteLine($"Start Location: {startLocation}");
+        Console.WriteLine($"Target Location: {targetLocation}\n");
 
         Console.WriteLine($"Start Node: {startNode}");
         Console.WriteLine($"Target Node: {targetNode}\n");

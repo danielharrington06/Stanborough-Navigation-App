@@ -755,4 +755,58 @@ public class DatabaseHelperScript : MonoBehaviour
         // had to rewrite code as vs code wasn't convinced that coordinateValues would exist otherwise
     }
 
+    /**
+    This function uses SQL to get the start type (node or room) of a given input location.
+    */
+    public string GetLocationType(string location) {
+
+        // check tblroom
+        double roomQuery = ExecuteScalarSelect("select Count(room_id) from tblRoom where room_id = \"" + location + "\"");
+        // check tblnode
+        double nodeQuery = ExecuteScalarSelect("select Count(node_id_id) from tblNode where node_id = " + location);
+        if (roomQuery == 1 && nodeQuery == 0) {
+            // is room
+            // now figure out which type
+            string[] roomRecord = GetRoomRecord(location);
+            if (roomRecord[2] == "" && roomRecord[3] != "") {
+                // connected to/is a node
+                if (roomRecord[4] != "" && roomRecord[5] != "") {
+                    return "RNC";
+                }
+                else {
+                    return "RN";
+                }
+            }
+            else if (roomRecord[2] != "" && roomRecord[3] == ""){
+                // is connected to an edge
+                string[] edgeRecord = GetEdgeRecord(Convert.ToInt32(roomRecord[2]));
+                if (edgeRecord[5] == "False") {
+                    // room connected to edge that is undirection
+                    return "REU";
+                }
+                else if (edgeRecord[5] == "True"){
+                    return "RED";
+                }
+                else { // one-way is null
+                    Debug.Log($"One-way is null for room {location}.");
+                    return "";
+
+                }
+            }
+            else { // info for both node and edge in room record
+                Debug.Log($"There is both a node_id and edge_id specified for room {location}.");
+                return "";
+            }
+        }
+        else if (roomQuery == 0 && nodeQuery == 1) {
+            // is a node from tblnode
+            return "N";
+        }
+        else { // no entry or two entries
+            Debug.Log($"There is either no record matching input {location} in tblNode and tblRoom or a record in both tblNode and tblRoom.");
+            return "";
+        }
+        
+    }
+
 }
