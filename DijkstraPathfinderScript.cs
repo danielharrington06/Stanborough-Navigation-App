@@ -338,12 +338,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
         // now convert the list into an array and reverse it
         // save time by storing length of list
-        int dijkstrPathLength = dijkstraPath.Count;
+        int dijkstraPathLength = dijkstraPath.Count;
         List<int> dijkstraPathReturn = new List<int>();
-        for (int i = 0; i < dijkstrPathLength; i++) {
+        for (int i = 0; i < dijkstraPathLength; i++) {
             // take last value and place it first in list
             // - 1 - i works
-            dijkstraPathReturn.Add(dijkstraPath[dijkstrPathLength-1-i]);
+            dijkstraPathReturn.Add(dijkstraPath[dijkstraPathLength-1-i]);
         }
 
         return dijkstraPathReturn;
@@ -850,192 +850,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
             estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
             estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime); //eta 
 
-            // now make array that holds coordinates for floor 0 and 1 paths
+            // get path coordinates
+            (floor0Path, floor1Path) = GetDijkstraPathCoordinates();
 
-            floor0Path = new List<double[]>();
-            floor1Path = new List<double[]>();
-
-            // deal with start location first
-
-            if (startType == "N") {
-                // is a node
-                // so coordinates covered with dijstra path
-            }
-            else if (startType == "RN") {
-                // is a room node
-                // so coordinates covered with dijstra path
-            }
-            else if (startType == "RNC") {
-                // room is connected to node
-                // add coordinates of room
-                // get record to get coordinates
-                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
-                
-                // get start node record to check which floor it is on
-                if (databaseHelper.GetRoomFloor(startLocation) == 0) {
-                    // ground floor
-                    // add room door
-                    floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
-                }
-                else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
-                    // first floor
-                    // add room door
-                    floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
-                }
-            }
-            else if (startType.Substring(0, 2) == "RE") {
-                // attached to an edge
-                // so add room coordinates and intersection coordinates
-                // get record to get coordinates
-                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
-
-                // have to do this to get 
-                if (databaseHelper.GetRoomFloor(startLocation) == 0) {
-                    // ground floor
-                    // add room door and edge intersection
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
-                    var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
-                    floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
-                    floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
-                }
-                else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
-                    // first floor
-                    // add room door and edge intersection
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
-                    var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
-                    floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
-                    floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
-                }
-            }
-
-            // add each node's coordinates in turn following dijkstra path
-
-            for (int i = 0; i < dijkstraPath.Count; i++) {
-                //check which floor
-                if (databaseHelper.GetNodeFloor(dijkstraPath[i]) == 0) {
-                    // ground floor
-                    floor0Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i])); // node 
-                    
-                    // now need to check for any edge vertices from this node to the one after and get them in the correct order
-                    if (i != dijkstraPath.Count -1) { // so dijksta path i + 1 can be taken
-                        if (databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]) == -1) {
-                            // no edge vertices exist, so move on
-                        }
-                        else {
-                            // get edge id so can get edge vertices
-                            int edgeID = databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]);
-                            List<double[]> edgeVertices = databaseHelper.GetEdgeVertices(edgeID, dijkstraPath[i]);
-                            // add them to current floor path
-                            for (int j = 0; j < edgeVertices.Count; j++) {
-                                floor0Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
-                            }
-
-                            // if the node after is on the other floor, add the edge vertices to this floor too
-                            if (databaseHelper.GetNodeFloor(dijkstraPath[i+1]) == 1) {
-                                // add the current node to other floor
-                                floor1Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i]));
-
-                                //add the edge vertices to the other floor too
-                                for (int j = 0; j < edgeVertices.Count; j++) {
-                                    floor1Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
-                                }
-
-                                // and add the next node to this floor
-                                floor0Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i+1]));
-                            }
-                        }
-                    }
-
-                }
-                else if (databaseHelper.GetNodeFloor(dijkstraPath[i]) == 1) {
-                    // first floor
-                    floor1Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i])); // node
-                    
-                    // now need to check for any edge vertices from this node to the one after and get them in the correct order
-                    if (i != dijkstraPath.Count -1) { // so dijksta path i + 1 can be taken
-                        if (databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]) == -1) {
-                            // no edge vertices exist, so move on
-                        }
-                        else {
-                            // get edge id so can get edge vertices
-                            int edgeID = databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]);
-                            List<double[]> edgeVertices = databaseHelper.GetEdgeVertices(edgeID, dijkstraPath[i]);
-                            // add them to current floor path
-                            for (int j = 0; j < edgeVertices.Count; j++) {
-                                floor1Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
-                            }
-    
-                            // if the node after is on the other floor, add the edge vertices to this floor too
-                            if (databaseHelper.GetNodeFloor(dijkstraPath[i+1]) == 0) {
-                                // add the current node to other floor
-                                floor0Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i]));
-    
-                                //add the edge vertices to the other floor too
-                                for (int j = 0; j < edgeVertices.Count; j++) {
-                                    floor0Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
-                                }
-    
-                                // and add the next node to this floor
-                                floor1Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i+1]));
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            // finally deal with target location
-
-            if (targetType == "N") {
-                // is a node
-                // so coordinates covered with dijstra path
-            }
-            else if (targetType == "RN") {
-                // is a room node
-                // so coordinates covered with dijstra path
-            }
-            else if (targetType == "RNC") {
-                // room is connected to node
-                // add coordinates of room
-                // get record to get coordinates
-                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
-                
-                // get start node record to check which floor it is on
-                if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
-                    // ground floor
-                    // add room door
-                    floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
-                }
-                else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
-                    // first floor
-                    // add room door
-                    floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
-                }
-            }
-            else if (startType.Substring(0, 2) == "RE") {
-                // attached to an edge
-                // so add room coordinates and intersection coordinates
-                // get record to get coordinates
-                string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
-
-                // have to do this to get 
-                if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
-                    // ground floor
-                    // add room door and edge intersection
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
-                    var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
-                    floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
-                    floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
-                }
-                else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
-                    // first floor
-                    // add room door and edge intersection
-                    double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
-                    var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
-                    floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
-                    floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
-                }
-            }
         }
 
         // along edge only method
@@ -1080,34 +897,10 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
             // no dijkstra path or dijkstra distances
 
-            // now find floor0Path and floor1Path
-            // both are on the same floor
-            if (databaseHelper.GetRoomFloor(startLocation) == 0) {
-                    // ground floor
-                    // add s room door, s intersection, t intersection, s room door
-                    floor0Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
-                    double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
-                    var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
-                    floor0Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
-                    double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
-                    var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
-                    floor0Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
-                    floor0Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
-                }
-                else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
-                    // first floor
-                    // add s room door, s intersection, t intersection, s room door
-                    floor1Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
-                    double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
-                    var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
-                    floor1Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
-                    double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
-                    var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
-                    floor1Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
-                    floor1Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
-                }
-
+            // get path coordinates
+            (floor0Path, floor1Path) = GetDijkstraPathCoordinates();        
         }
+
         // should NEVER execute
         else {
             Console.WriteLine("This should never execute. If it does, there is a pathway in the nested if's above that leads to method not being assigned.");
@@ -1119,6 +912,245 @@ public class DijkstraPathfinderScript : MonoBehaviour
         stopwatch.Stop();
 
         // could now show results to screen
+    }
+    
+    /**
+    This function finds the paths for the ground and first floor and returns them.
+    This works for method 0 (normal) pathfinding.
+    */
+    public (List<double[]>, List<double[]>) GetDijkstraPathCoordinates() {
+
+        // now make list of arrays that holds coordinates for floor 0 and 1 paths
+
+        floor0Path = new List<double[]>();
+        floor1Path = new List<double[]>();
+
+        // deal with start location first
+
+        if (startType == "N") {
+            // is a node
+            // so coordinates covered with dijstra path
+        }
+        else if (startType == "RN") {
+            // is a room node
+            // so coordinates covered with dijstra path
+        }
+        else if (startType == "RNC") {
+            // room is connected to node
+            // add coordinates of room
+            // get record to get coordinates
+            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+            
+            // get start node record to check which floor it is on
+            if (databaseHelper.GetRoomFloor(startLocation) == 0) {
+                // ground floor
+                // add room door
+                floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
+            }
+            else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
+                // first floor
+                // add room door
+                floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
+            }
+        }
+        else if (startType.Substring(0, 2) == "RE") {
+            // attached to an edge
+            // so add room coordinates and intersection coordinates
+            // get record to get coordinates
+            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+
+            // have to do this to get 
+            if (databaseHelper.GetRoomFloor(startLocation) == 0) {
+                // ground floor
+                // add room door and edge intersection
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+                var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
+                floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
+                floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
+            }
+            else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
+                // first floor
+                // add room door and edge intersection
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+                var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
+                floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
+                floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
+            }
+        }
+
+        // add each node's coordinates in turn following dijkstra path
+
+        for (int i = 0; i < dijkstraPath.Count; i++) {
+            //check which floor
+            if (databaseHelper.GetNodeFloor(dijkstraPath[i]) == 0) {
+                // ground floor
+                floor0Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i])); // node 
+                
+                // now need to check for any edge vertices from this node to the one after and get them in the correct order
+                if (i != dijkstraPath.Count -1) { // so dijksta path i + 1 can be taken
+                    if (databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]) == -1) {
+                        // no edge vertices exist, so move on
+                    }
+                    else {
+                        // get edge id so can get edge vertices
+                        int edgeID = databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]);
+                        List<double[]> edgeVertices = databaseHelper.GetEdgeVertices(edgeID, dijkstraPath[i]);
+                        // add them to current floor path
+                        for (int j = 0; j < edgeVertices.Count; j++) {
+                            floor0Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
+                        }
+
+                        // if the node after is on the other floor, add the edge vertices to this floor too
+                        if (databaseHelper.GetNodeFloor(dijkstraPath[i+1]) == 1) {
+                            // add the current node to other floor
+                            floor1Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i]));
+
+                            //add the edge vertices to the other floor too
+                            for (int j = 0; j < edgeVertices.Count; j++) {
+                                floor1Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
+                            }
+
+                            // and add the next node to this floor
+                            floor0Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i+1]));
+                        }
+                    }
+                }
+
+            }
+            else if (databaseHelper.GetNodeFloor(dijkstraPath[i]) == 1) {
+                // first floor
+                floor1Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i])); // node
+                
+                // now need to check for any edge vertices from this node to the one after and get them in the correct order
+                if (i != dijkstraPath.Count -1) { // so dijksta path i + 1 can be taken
+                    if (databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]) == -1) {
+                        // no edge vertices exist, so move on
+                    }
+                    else {
+                        // get edge id so can get edge vertices
+                        int edgeID = databaseHelper.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]);
+                        List<double[]> edgeVertices = databaseHelper.GetEdgeVertices(edgeID, dijkstraPath[i]);
+                        // add them to current floor path
+                        for (int j = 0; j < edgeVertices.Count; j++) {
+                            floor1Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
+                        }
+
+                        // if the node after is on the other floor, add the edge vertices to this floor too
+                        if (databaseHelper.GetNodeFloor(dijkstraPath[i+1]) == 0) {
+                            // add the current node to other floor
+                            floor0Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i]));
+
+                            //add the edge vertices to the other floor too
+                            for (int j = 0; j < edgeVertices.Count; j++) {
+                                floor0Path.Add(new double[2] {edgeVertices[j][0], edgeVertices[j][1]});
+                            }
+
+                            // and add the next node to this floor
+                            floor1Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i+1]));
+                        }
+                    }
+                }
+            }
+        }
+        // finally deal with target location
+
+        if (targetType == "N") {
+            // is a node
+            // so coordinates covered with dijstra path
+        }
+        else if (targetType == "RN") {
+            // is a room node
+            // so coordinates covered with dijstra path
+        }
+        else if (targetType == "RNC") {
+            // room is connected to node
+            // add coordinates of room
+            // get record to get coordinates
+            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+            
+            // get start node record to check which floor it is on
+            if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
+                // ground floor
+                // add room door
+                floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
+            }
+            else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
+                // first floor
+                // add room door
+                floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
+            }
+        }
+        else if (startType.Substring(0, 2) == "RE") {
+            // attached to an edge
+            // so add room coordinates and intersection coordinates
+            // get record to get coordinates
+            string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+
+            // have to do this to get 
+            if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
+                // ground floor
+                // add room door and edge intersection
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+                var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
+                floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
+                floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
+            }
+            else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
+                // first floor
+                // add room door and edge intersection
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+                var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
+                floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
+                floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
+            }
+        }
+
+        return (floor0Path, floor1Path);
+    }
+
+    /**
+    This function finds the paths for the ground and first floor and returns them.
+    This works for method 1 (edge) pathfinding.
+    */
+    public (List<double[]>, List<double[]>) GetEdgePathCoordinates() {
+
+        // now make list of arrays that holds coordinates for floor 0 and 1 paths
+
+        floor0Path = new List<double[]>();
+        floor1Path = new List<double[]>();
+
+        // define room records
+        string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+        string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+
+        // now find floor0Path and floor1Path
+        // both are on the same floor
+        if (databaseHelper.GetRoomFloor(startLocation) == 0) {
+                // ground floor
+                // add s room door, s intersection, t intersection, s room door
+                floor0Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
+                double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+                var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
+                floor0Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
+                double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+                var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
+                floor0Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
+                floor0Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
+            }
+        else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
+            // first floor
+            // add s room door, s intersection, t intersection, s room door
+            floor1Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
+            double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+            var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
+            floor1Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
+            double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+            var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
+            floor1Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
+            floor1Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
+        }
+
+        return (floor0Path, floor1Path);
     }
 
     /**
