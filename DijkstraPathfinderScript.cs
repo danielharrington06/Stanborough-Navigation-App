@@ -13,6 +13,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     [SerializeField] private MatrixBuilderScript matrixBuilder;
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private PathRendererScript pathRenderer;
+    [SerializeField] private UserSettingsScript userSettings;
 
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
     
@@ -43,8 +44,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public List<double[]> floor0Path; // path of coordinates
     public List<double[]> floor1Path; // path of coordinates
 
-    public List<int> floor0BreakIndex; // {get; private set;} // path of coordinates
-    public List<int> floor1BreakIndex; // {get; private set;} // path of coordinates
+    public List<int> floor0BreakIndex {get; private set;} // path of coordinates
+    public List<int> floor1BreakIndex {get; private set;} // path of coordinates
 
     public double estimatedDistance;
 
@@ -159,9 +160,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         // repeats as long as there is at least one unvisited node
         while (visitedNodes.Contains(false)) {
+            
+            UnityEngine.Debug.Log(currentNodeIndex);
 
-            if (currentNodeIndex == 80) {
-            }
             visitedNodes[currentNodeIndex] = true;
             distanceToNode = dijkstraDistances[currentNodeIndex];
 
@@ -200,6 +201,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 }
             }
             currentNodeIndex = lowestValIndex;
+            if (lowestValIndex == -1) {
+                return dijkstraDistances;
+            }
         }
 
         return dijkstraDistances;
@@ -706,6 +710,64 @@ public class DijkstraPathfinderScript : MonoBehaviour
     }
 
     /**
+    This procedure goes through an array of boundary nodes and purges them from the time matrix
+    if the target/start is none of them nor any nodes which are beyond the school gates.
+    Which ones it removes depends on the user type.
+    */
+    public void PurgeEdges() {
+        int[] gateNodes = {71, 56, 67, 2};
+        int[] beyondBoundaryNodes = {1, 68, 57, 69, 70};
+        int[] studentNoNodes = {34};
+
+        bool needToUseBoundaryNodes = false;
+
+        // no one should be directed outside of gates even if teacher
+        if (startType == "N") {
+            needToUseBoundaryNodes = needToUseBoundaryNodes || gateNodes.Contains(Convert.ToInt32(startLocation));
+            needToUseBoundaryNodes = needToUseBoundaryNodes || beyondBoundaryNodes.Contains(Convert.ToInt32(startLocation));
+        }
+        if (targetType == "N") {
+            needToUseBoundaryNodes = needToUseBoundaryNodes || gateNodes.Contains(Convert.ToInt32(targetLocation));
+            needToUseBoundaryNodes = needToUseBoundaryNodes || beyondBoundaryNodes.Contains(Convert.ToInt32(targetLocation));
+        }
+        
+        // purge nodes if needed
+        if (!needToUseBoundaryNodes) {
+            for (int i = 0; i < gateNodes.Length; i++) {
+                RemoveNodeInMatrices(gateNodes[i]);
+            }
+        }
+
+        // now sixth form (currently)
+        if (userSettings.userType == "student") {
+            for (int i = 0; i < studentNoNodes.Length; i++) {
+                RemoveNodeInMatrices(studentNoNodes[i]);
+            }
+        }
+    }
+
+    /**
+    This procedure removes all edges attached to a node in the time matrix.
+    */
+    public void RemoveNodeInMatrices(int node_id) {
+        int nodeIndex = Array.IndexOf(nodesForMatrix, node_id);
+
+        // remove entire row
+        for (int i = 0; i < numberOfNodes; i++) {
+            timeMatrix[nodeIndex, i] = 0;
+            infoMatrix[nodeIndex, i] = '0';
+            distanceMatrix[nodeIndex, i] = 0;
+        }
+
+        // remove entire column
+        for (int i = 0; i < numberOfNodes; i++) {
+            timeMatrix[i, nodeIndex] = 0;
+            infoMatrix[i, nodeIndex] = '0';
+            distanceMatrix[i, nodeIndex] = 0;
+        }
+    }
+
+    /**
     This procedure links together all of the necessary functions for carrying out Dijkstra's
     Algorithm for a typical user, including returning the time, eta, distance.
     */
@@ -788,6 +850,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // normal dijkstra method
         if (method == 0) {
 
+            // get values to 0 on the time matrix on the nodes that cant be used unless they are the target/start
+            PurgeEdges();
+
             // carry out dijkstras from start node
             dijkstraDistances = DijkstrasAlgorithm(timeMatrix, startNode);
 
@@ -840,9 +905,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
             }
             else if (targetType.Substring(0, 2) == "RE") {
                 // room is connected to edge so add distance from room to startnode
-                string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
                 string[] tEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(tRoomRecord[2]));
-                tRoomDistance = EstimateNodeRoomDistance(startNode, startLocation);
+                tRoomDistance = EstimateNodeRoomDistance(targetNode, targetLocation);
                 tRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
             }
             else{
