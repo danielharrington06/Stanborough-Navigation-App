@@ -43,6 +43,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public List<double[]> floor0Path; // path of coordinates
     public List<double[]> floor1Path; // path of coordinates
 
+    public List<int> floor0BreakIndex; // {get; private set;} // path of coordinates
+    public List<int> floor1BreakIndex; // {get; private set;} // path of coordinates
+
     public double estimatedDistance;
 
     public bool showResults;
@@ -106,8 +109,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
         estimatedTimeOfArrival = new TimeSpan(0, 0, 0);
 
         dijkstraPath = new List<int>();
+
         floor0Path = new List<double[]>();
         floor1Path = new List<double[]>();
+
+        floor0BreakIndex = new List<int>();
+        floor1BreakIndex = new List<int>();
 
         startType = "";
         targetType = "";
@@ -922,9 +929,14 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public (List<double[]>, List<double[]>) GetDijkstraPathCoordinates() {
 
         // now make list of arrays that holds coordinates for floor 0 and 1 paths
-
         floor0Path = new List<double[]>();
         floor1Path = new List<double[]>();
+
+        // make list of indexes that represent the node after which there is an unconnected line
+        floor0BreakIndex = new List<int>();
+        floor1BreakIndex = new List<int>();
+        // while going through and adding coordinates if the previous node was on a different floor, 
+        // the current length of that floor path gets added as an index to break up the line
 
         // deal with start location first
 
@@ -1016,7 +1028,15 @@ public class DijkstraPathfinderScript : MonoBehaviour
                         }
                     }
                 }
-
+                // check if last node was on different floor, and if so add to breaks
+                if (i != 0) {
+                    if (databaseHelper.GetNodeFloor(dijkstraPath[i-1]) == 1) {
+                        floor1BreakIndex.Add(((floor1Path.Count-1)*4)+0);
+                        floor1BreakIndex.Add(((floor1Path.Count-1)*4)+1);
+                        floor1BreakIndex.Add(((floor1Path.Count-1)*4)+2);
+                        floor1BreakIndex.Add(((floor1Path.Count-1)*4)+3);
+                    }
+                }
             }
             else if (databaseHelper.GetNodeFloor(dijkstraPath[i]) == 1) {
                 // first floor
@@ -1049,6 +1069,15 @@ public class DijkstraPathfinderScript : MonoBehaviour
                             // and add the next node to this floor
                             floor1Path.Add(databaseHelper.GetNodeCoordinates(dijkstraPath[i+1]));
                         }
+                    }
+                }
+                // check if last node was on different floor, and if so add to breaks
+                if (i != 0) {
+                    if (databaseHelper.GetNodeFloor(dijkstraPath[i-1]) == 0) {
+                        floor0BreakIndex.Add(((floor0Path.Count-1)*4)+0);
+                        floor0BreakIndex.Add(((floor0Path.Count-1)*4)+1);
+                        floor0BreakIndex.Add(((floor0Path.Count-1)*4)+2);
+                        floor0BreakIndex.Add(((floor0Path.Count-1)*4)+3);
                     }
                 }
             }

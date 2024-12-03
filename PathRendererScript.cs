@@ -70,7 +70,19 @@ public class PathRendererScript : MonoBehaviour
             // create an array of colors and assign to each vertex
             Color[] colors = new Color[linePoints.Length];
             for (int i = 0; i < colors.Length; i++) {
-                colors[i] = lineColour;
+                if (!floor) { // ground floor
+                    if (!dijkstraPathfinder.floor0BreakIndex.Contains(i)) {
+                        // index not in break index, so assign a colour
+                        colors[i] = lineColour;
+                    }
+                }
+                else { // first floor
+                    if (!dijkstraPathfinder.floor1BreakIndex.Contains(i)) {
+                        // index not in break index, so assign a colour
+                        colors[i] = lineColour;
+                    }
+                }
+                
             }
             mesh.colors = colors;
         }
