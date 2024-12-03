@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEditor.Rendering;
 using UnityEngine;
 
 public class DijkstraPathfinderScript : MonoBehaviour
@@ -13,6 +14,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     [SerializeField] private MatrixBuilderScript matrixBuilder;
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private PathRendererScript pathRenderer;
+    [SerializeField] private UserSettingsScript userSettings;
 
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
     
@@ -32,7 +34,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     private string startType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
     private string targetType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
 
-    private double[] dijkstraDistances;
+    public double[] dijkstraDistances;
 
     public double estimatedTimeInSecs;
     public TimeSpan estimatedTime;
@@ -160,8 +162,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // repeats as long as there is at least one unvisited node
         while (visitedNodes.Contains(false)) {
 
-            if (currentNodeIndex == 80) {
-            }
             visitedNodes[currentNodeIndex] = true;
             distanceToNode = dijkstraDistances[currentNodeIndex];
 
@@ -209,6 +209,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 return dijkstraDistances;
             }
             currentNodeIndex = lowestValIndex;
+            
         }
 
         return dijkstraDistances;
@@ -310,6 +311,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
             possibleNodes.Clear();
             for (int i = 0; i < numberOfNodes; i++) {
                 // add optimal edges to list
+
+                if(currentNode == 29 && attachedEdges[i] != 0) {
+                    UnityEngine.Debug.Log($"Node {currentNode}, to node {nodesForMatrix[i]}: {attachedEdges[i]}");
+                    UnityEngine.Debug.Log($"{currentNodeIndex}: {Math.Round(dijkstraDistances[currentNodeIndex] - attachedEdges[i], 1)}");
+                    UnityEngine.Debug.Log(dijkstraDistances[i]);
+                }
                 
                 // current dijkstra time - time to node =? dijkstra time to node
                 if (Math.Round(dijkstraDistances[currentNodeIndex] - attachedEdges[i], 1) == dijkstraDistances[i]) {
@@ -335,7 +342,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
             }
             else if (possibleNodes.Count > 1) {
                 // take first index for simplicity
-                UnityEngine.Debug.Log("In pathfinding, there were multiple possible nodes to choose from when backtracking Dijkstra's path.");
+                //UnityEngine.Debug.Log($"In pathfinding, there were multiple possible nodes to choose from when backtracking Dijkstra's path.");
+                string possibleNodesText = "";
+                for (int i = 0; i < possibleNodes.Count; i++) {
+                    possibleNodesText = possibleNodesText + Convert.ToString(nodesForMatrix[possibleNodes[i]]) + ", ";
+                }
+                UnityEngine.Debug.Log($"\nAt node {currentNode} the options were {possibleNodesText}.");
                 currentNodeIndex = possibleNodes[0];
                 // get node id of current node
                 currentNode = nodesForMatrix[currentNodeIndex];
@@ -349,7 +361,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                     break;
                 }
                 else {
-                    throw new ApplicationException($"Program has no options for a node past '{currentNode}");
+                    throw new ApplicationException($"Program has no options for a node past {currentNode}");
                 }
             }
         }
@@ -778,6 +790,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public void CarryOutAndInterpretPathfinding() {
 
+        //matrixBuilder.BuildMatricesForPathfinding();
         ResetFields();
 
         // set fields startRoom and targetRoom
@@ -855,10 +868,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // normal dijkstra method
         if (method == 0) {
 
+            // get values to 0 on the time matrix on the nodes that cant be used unless they are the target/start
             PurgeEdges();
 
             // carry out dijkstras from start node
             dijkstraDistances = DijkstrasAlgorithm(timeMatrix, startNode);
+            UnityEngine.Debug.Break();
 
             // now do time, path, distance for nodes stuff only
 
