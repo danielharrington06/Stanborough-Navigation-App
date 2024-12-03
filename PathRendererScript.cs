@@ -39,6 +39,7 @@ public class PathRendererScript : MonoBehaviour
                 mesh.Clear();
             }
         }
+        DrawPath();
     }
 
     void DrawPath() {

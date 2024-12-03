@@ -14,6 +14,8 @@ public class NodeDisplayerScript : MonoBehaviour
     public int[] lineTriangles;
     private bool floor;
 
+    public bool show;
+
     // line properties
     public float lineWidth = 0.05f; // line width
     public Color lineColour = Color.red;
@@ -24,12 +26,18 @@ public class NodeDisplayerScript : MonoBehaviour
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
+        show = false;
     }
 
     void Update() {
         floor = userSettings.floor;
+        if (show) {
+            DrawLines();
+        }
+        if (!show) {
+            mesh.Clear();
+        }
         
-        DrawLines();
     }
 
     void DrawLines() {

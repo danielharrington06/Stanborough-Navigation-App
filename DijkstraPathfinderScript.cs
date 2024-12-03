@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class DijkstraPathfinderScript : MonoBehaviour
@@ -33,9 +34,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     private double[] dijkstraDistances;
 
-    private double estimatedTimeInSecs;
+    public double estimatedTimeInSecs;
     public TimeSpan estimatedTime;
-    private TimeSpan estimatedTimeOfArrival;
+    public TimeSpan estimatedTimeOfArrival;
 
     public List<int> dijkstraPath; // path of node id's
 
@@ -97,8 +98,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
         
 
-        startNode = -1; // get from user interface stuff
-        targetNode = -1; // get from user interface stuff
+        startNode = 0; // get from user interface stuff
+        targetNode = 0; // get from user interface stuff
 
         dijkstraDistances = new double[numberOfNodes];
         estimatedTime = new TimeSpan(0, 0, 0);
@@ -406,7 +407,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         List<int> startLocationPossNodes = new List<int>();
 
         // if node, just do the int of the node
-        if (startType == "N") {
+        if (startType == "N  ") {
             startLocationPossNodes.Add(Convert.ToInt32(startLocation));
         }
         else {
@@ -414,12 +415,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
             string[] startRoomRecord = databaseHelper.GetRoomRecord(startLocation);
             
             // figure out if connected to node or edge
-            if (startRoomRecord[2] == "" && startRoomRecord[3] != "") {
+            if (startType.Substring(0, 2) == "RN") {
                 // connected to node or is a node
                 startLocationPossNodes.Add(Convert.ToInt32(startRoomRecord[3]));
                 // this is the only possible node
             }
-            else if (startRoomRecord[2] != "" && startRoomRecord[3] == "") {
+            else if (startType.Substring(0, 2) == "RE") {
                 // connected to edge
                 // query db for edge info to figure out if it is directional and the nodes
                 string[] startEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(startRoomRecord[2]));
@@ -443,7 +444,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         List<int> targetLocationPossNodes = new List<int>();
 
         // if node, just do the int of the node
-        if (targetType == "N") {
+        if (targetType == "N  ") {
             targetLocationPossNodes.Add(Convert.ToInt32(targetLocation));
         }
         else {
@@ -451,19 +452,19 @@ public class DijkstraPathfinderScript : MonoBehaviour
             string[] targetRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
             
             // figure out if connected to node or edge
-            if (targetRoomRecord[2] == "" && targetRoomRecord[3] != "") {
+            if (targetType.Substring(0, 2) == "RN") {
                 // connected to node or is a node
                 targetLocationPossNodes.Add(Convert.ToInt32(targetRoomRecord[3]));
                 // this is the only possible node
             }
-            else if (targetRoomRecord[2] != "" && targetRoomRecord[3] == "") {
+            else if (targetType.Substring(0, 2) == "RE") {
                 // connected to edge
                 // query db for edge info to figure out if it is directional and the nodes
                 string[] targetEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(targetRoomRecord[2]));
                 
                 if (targetEdgeInfo[5] == "True") { // directional edge 
-                    // so use node 2 as only node as user can at first only walk from room to this edge
-                    targetLocationPossNodes.Add(Convert.ToInt32(targetEdgeInfo[2]));
+                    // so use node 1 as user has to follow one one way system on entrance to this edge
+                    targetLocationPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
                 }
                 else { // non directional
                     // so user can leave room and go to either node
@@ -719,11 +720,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
         targetType = databaseHelper.GetLocationType(targetLocation);
 
         // dea with "" being returned
-        if (startType == "") {
+        if (startType == "   ") {
             UnityEngine.Debug.Log($"Start Location {startLocation} was invalid.");
             return;
         }
-        else if (targetType == "") {
+        else if (targetType == "   ") {
             UnityEngine.Debug.Log($"Target Location {targetLocation} was invalid.");
             return;
         }
@@ -738,14 +739,14 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // only method 1 if room that is connected to edge, on the same edge and...
         // (edge is not one way or edge is one way and distance to the startroom from the edge startnode is less than to targetroom)
         // only can check both are rooms (not nodes)
-        if (startType != "N" && targetType != "N") {
+        if (startType != "N  " && targetType != "N  ") {
 
             // check if locations are rooms attached to edges
             if (startType.Substring(0, 2) != "RN" && targetType.Substring(0, 2) != "RN") {
                 
                 // connected to edge, so check if same edge
                 string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
-                string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
 
                 // check if the same edge
                 if (sRoomRecord[2] == tRoomRecord[2]) {
@@ -844,8 +845,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
             }
 
             // and update time and distance
-            estimatedTimeInSecs = estimatedTimeInSecs + sRoomTime + tRoomTime;
-            estimatedDistance = estimatedDistance + sRoomDistance + tRoomDistance;
+            estimatedTimeInSecs = Math.Round(estimatedTimeInSecs + sRoomTime + tRoomTime, 1);
+            estimatedDistance = Math.Round(estimatedDistance + sRoomDistance + tRoomDistance, 1);
 
             estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
             estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime); //eta 
@@ -927,11 +928,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         // deal with start location first
 
-        if (startType == "N") {
+        if (startType == "N  ") {
             // is a node
             // so coordinates covered with dijstra path
         }
-        else if (startType == "RN") {
+        else if (startType == "RN ") {
             // is a room node
             // so coordinates covered with dijstra path
         }
@@ -1054,11 +1055,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
         // finally deal with target location
 
-        if (targetType == "N") {
+        if (targetType == "N  ") {
             // is a node
             // so coordinates covered with dijstra path
         }
-        else if (targetType == "RN") {
+        else if (targetType == "RN ") {
             // is a room node
             // so coordinates covered with dijstra path
         }
@@ -1068,7 +1069,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // get record to get coordinates
             string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
             
-            // get start node record to check which floor it is on
+            // get target node record to check which floor it is on
             if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
                 // ground floor
                 // add room door
@@ -1080,11 +1081,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
             }
         }
-        else if (startType.Substring(0, 2) == "RE") {
+        else if (targetType.Substring(0, 2) == "RE") {
             // attached to an edge
             // so add room coordinates and intersection coordinates
             // get record to get coordinates
-            string[] tRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
 
             // have to do this to get 
             if (databaseHelper.GetRoomFloor(targetLocation) == 0) {

@@ -10,21 +10,30 @@ public class RoomConnectorScript : MonoBehaviour
     public Vector3[] linePoints;
     public int[] lineTriangles;
     private bool floor;
+    
+    public bool show;
 
     // line properties
     public float lineWidth = 0.05f; // line width
     public Color lineColour = Color.blue;
 
+
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
         lineColour = Color.blue;
+        show = false;
     }
 
     void Update() {
         floor = userSettings.floor;
-
-        DrawLines();
+        if (show) {
+            DrawLines();
+        }
+        if (!show) {
+            mesh.Clear();
+        }
+        
     }
 
     void DrawLines() {

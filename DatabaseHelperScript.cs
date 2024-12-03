@@ -760,10 +760,28 @@ public class DatabaseHelperScript : MonoBehaviour
     */
     public string GetLocationType(string location) {
 
+        bool isNum;
+        // check if input is num
+        try {
+            Convert.ToInt32(location);
+            isNum = true;
+        }
+        catch {
+            isNum = false;
+        }
+
+        // default query results to 0
+        double roomQuery = 0;
+        double nodeQuery = 0;
         // check tblroom
-        double roomQuery = ExecuteScalarSelect("select Count(room_id) from tblRoom where room_id = \"" + location + "\"");
-        // check tblnode
-        double nodeQuery = ExecuteScalarSelect("select Count(node_id_id) from tblNode where node_id = " + location);
+        if (isNum) {
+            // check tblnode
+            nodeQuery = ExecuteScalarSelect("select Count(node_id) from tblNode where node_id = " + location);
+        }
+        else {
+            roomQuery = ExecuteScalarSelect("select Count(room_id) from tblRoom where room_id = \"" + location + "\"");
+        }
+        
         if (roomQuery == 1 && nodeQuery == 0) {
             // is room
             // now figure out which type
@@ -774,7 +792,7 @@ public class DatabaseHelperScript : MonoBehaviour
                     return "RNC";
                 }
                 else {
-                    return "RN";
+                    return "RN ";
                 }
             }
             else if (roomRecord[2] != "" && roomRecord[3] == ""){
@@ -789,24 +807,22 @@ public class DatabaseHelperScript : MonoBehaviour
                 }
                 else { // one-way is null
                     Debug.Log($"One-way is null for room {location}.");
-                    return "";
+                    return "   ";
 
                 }
             }
             else { // info for both node and edge in room record
                 Debug.Log($"There is both a node_id and edge_id specified for room {location}.");
-                return "";
+                return "   ";
             }
         }
         else if (roomQuery == 0 && nodeQuery == 1) {
             // is a node from tblnode
-            return "N";
+            return "N  ";
         }
         else { // no entry or two entries
             Debug.Log($"There is either no record matching input {location} in tblNode and tblRoom or a record in both tblNode and tblRoom.");
-            return "";
+            return "   ";
         }
-        
     }
-
 }
