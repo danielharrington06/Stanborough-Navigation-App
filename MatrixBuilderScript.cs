@@ -8,6 +8,7 @@ public class MatrixBuilderScript : MonoBehaviour
 {
     // fields
     [SerializeField] private DatabaseHelperScript databaseHelper;
+    [SerializeField] private UserSettingsScript userSettings;
 
     private double[,] edgeVelocities = new double[5, 2];
     private char[] edgeTypes = new char[5];
@@ -28,7 +29,8 @@ public class MatrixBuilderScript : MonoBehaviour
 
     public double[,] timeMatrixDefault;
 
-    public double[,] timeMatrixStairsLifts {get; private set;}
+    public double[,] timeMatrixStairs {get; private set;}
+    public double[,] timeMatrixLifts {get; private set;}
 
     public int numberOfNodes {get; private set;}
 
@@ -64,7 +66,7 @@ public class MatrixBuilderScript : MonoBehaviour
         useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
 
         // get user settings for step free access
-        stepFree = false; // false means using stairs
+        stepFree = userSettings.stepFree; // false means using stairs
 
         // set non null values for array/matrices
         numberOfNodes = databaseHelper.GetNumberOfNodes();
@@ -78,7 +80,8 @@ public class MatrixBuilderScript : MonoBehaviour
 
         timeMatrixDefault = new double[numberOfNodes, numberOfNodes];
 
-        timeMatrixStairsLifts = new double[numberOfNodes, numberOfNodes];
+        timeMatrixStairs = new double[numberOfNodes, numberOfNodes];
+        timeMatrixLifts = new double[numberOfNodes, numberOfNodes];
 
         // now setup matrices
         BuildMatricesForPathfinding();
@@ -275,13 +278,15 @@ public class MatrixBuilderScript : MonoBehaviour
     stairs get directed through them.
     It iteratively looks through the info matrix for either S or L and adjusts the matrix correctly.
     */
-    public double[,] AdjustStairsLifts(double[,] timeMatrix, char[,] infoMatrix) {
+    public double[,] AdjustStairsLifts(double[,] timeMatrix, char[,] infoMatrix, bool stepFree) {
 
         //saves computation time only checking this once instead of for each iteration
         if (stepFree) { // so get rid of edges for stairs
+
             for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
                 for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                     if (infoMatrix[rowNum, colNum] == 'S') {
+                        //UnityEngine.Debug.Log($"Removed stairs at {rowNum}, {colNum}");
                         if (rowNum != 13 && colNum != 13) {
                             timeMatrix[rowNum, colNum] = 0;
                         }
@@ -316,12 +321,13 @@ public class MatrixBuilderScript : MonoBehaviour
         BuildNormalMatrices();
         BuildOWSMatrices();
         timeMatrixDefault = ConfigureTimeMatrix(distanceMatrixDefault, infoMatrixDefault);
-        if (!stepFree) {
-            timeMatrixStairsLifts = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixOneWay, infoMatrixOneWay), infoMatrixOneWay);
-        }
-        else {
-            timeMatrixStairsLifts = AdjustStairsLifts(timeMatrixDefault, infoMatrixDefault);
-        }
+        // fill time matrix stairs and time matrix lifts
+
+        // not step free, so one way system
+        timeMatrixStairs = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixOneWay, infoMatrixOneWay), infoMatrixOneWay, false);
+
+        // step free so no one way system
+        timeMatrixLifts = AdjustStairsLifts(timeMatrixDefault, infoMatrixDefault, true);
 
         // stop stopwatch
         stopwatch.Stop();

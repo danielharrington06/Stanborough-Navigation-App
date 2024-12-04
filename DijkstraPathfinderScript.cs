@@ -92,12 +92,14 @@ public class DijkstraPathfinderScript : MonoBehaviour
         numberOfNodes = matrixBuilder.numberOfNodes;
 
         nodesForMatrix = matrixBuilder.nodesForMatrix;
-        timeMatrix = matrixBuilder.timeMatrixStairsLifts;
-        if (matrixBuilder.stepFree) {
+        //UnityEngine.Debug.Log("tST" + userSettings.stepFree);
+        if (!userSettings.stepFree) { // not step free, so have to follow one-way
+            timeMatrix = matrixBuilder.timeMatrixStairs;
             distanceMatrix = matrixBuilder.distanceMatrixOneWay;
             infoMatrix = matrixBuilder.infoMatrixOneWay;
         }
         else {
+            timeMatrix = matrixBuilder.timeMatrixLifts;
             distanceMatrix = matrixBuilder.distanceMatrixDefault;
             infoMatrix = matrixBuilder.infoMatrixDefault;
         }
@@ -203,7 +205,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 for (int i = 0; i < dijkstraDistances.Length; i++) {
                     if (dijkstraDistances[i] == 0 && nodesForMatrix[i] != startNode) {
                         dijkstraDistances[i] = double.MaxValue;
-                        UnityEngine.Debug.Log($"{nodesForMatrix[i]} set to max value.");
+                        //UnityEngine.Debug.Log($"{nodesForMatrix[i]} set to max value.");
                     }
                 }
                 return dijkstraDistances;
@@ -453,7 +455,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 // query db for edge info to figure out if it is directional and the nodes
                 string[] startEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(startRoomRecord[2]));
                 
-                if (startEdgeInfo[5] == "True") { // directional edge 
+                if (startEdgeInfo[5] == "True" && !userSettings.stepFree) { // directional edge 
                     // so use node 2 as only node as user can at first only walk from room to this edge
                     startLocationPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
                 }
@@ -490,7 +492,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 // query db for edge info to figure out if it is directional and the nodes
                 string[] targetEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(targetRoomRecord[2]));
                 
-                if (targetEdgeInfo[5] == "True") { // directional edge 
+                
+                if (targetEdgeInfo[5] == "True" && !userSettings.stepFree) { // directional edge 
                     // so use node 1 as user has to follow one one way system on entrance to this edge
                     targetLocationPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
                 }
@@ -873,7 +876,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
             // carry out dijkstras from start node
             dijkstraDistances = DijkstrasAlgorithm(timeMatrix, startNode);
-            UnityEngine.Debug.Break();
+            //UnityEngine.Debug.Break();
 
             // now do time, path, distance for nodes stuff only
 
@@ -1263,7 +1266,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
             floor1Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
             floor1Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
         }
-
+        
         return (floor0Path, floor1Path);
     }
 
