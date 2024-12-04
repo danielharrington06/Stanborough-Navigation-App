@@ -819,6 +819,19 @@ public class DijkstraPathfinderScript : MonoBehaviour
             return;
         }
 
+        // first sort out possibility that start location may be the target location
+        if (startLocation == targetLocation) {
+            estimatedTimeInSecs = 0;
+            estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
+            estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
+            estimatedDistance = 0;
+            UnityEngine.Debug.Log($"The start location \"{startLocation}\" was the same as the target location \"{targetLocation}\".");
+            // output a message like above to the screen
+            // exit procedure very early
+            return;
+
+        }
+
         // figure out which node
         List<List<int>> possibleNodes = EvaluatePossibleNodes();
         DetermineStartAndTargetNodes(possibleNodes, startLocation, targetLocation);
