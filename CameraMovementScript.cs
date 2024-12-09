@@ -25,9 +25,12 @@ public class CameraMovementScript : MonoBehaviour
         mapMinY = mapBounds[3] - mapBuffer;
 
         // calculate max camera size
-        // the greatest possible world width divided by the camera width scaled to size 1
+        // the greatest possible world width/height divided by the camera width/height scaled to size 1
         // camera aspect is the half the actual width scaled to size one
-        maxCameraSize = (mapMaxX-mapMinX)/(camera.aspect*2);
+        float maxCameraSizeX = (mapMaxX-mapMinX)/(camera.aspect*2);
+        float maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
+        // choose the minimum of the two possible maximums
+        maxCameraSize = Math.Min(maxCameraSizeX, maxCameraSizeY);
 
         // get min camera size 
         minCameraSize = Convert.ToSingle(databaseHelper.GetMinCameraSize());
@@ -36,7 +39,6 @@ public class CameraMovementScript : MonoBehaviour
         int numZoomIncrements = Convert.ToInt32(databaseHelper.GetNumCameraZoomIncrements());
         cameraZoomStep = (maxCameraSize - minCameraSize) / numZoomIncrements;
         
-
         ResetCamera();
         
     }
