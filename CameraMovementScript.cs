@@ -14,8 +14,6 @@ public class CameraMovementScript : MonoBehaviour
 
     private float mapBuffer, mapMaxX, mapMinX, mapMaxY, mapMinY;
 
-    bool currentlyScrolling;
-
     void Start() {
 
         // get info for max bounds
@@ -37,8 +35,7 @@ public class CameraMovementScript : MonoBehaviour
         // calculate the zoom step as the range of zoom divided by the number of increments
         int numZoomIncrements = Convert.ToInt32(databaseHelper.GetNumCameraZoomIncrements());
         cameraZoomStep = (maxCameraSize - minCameraSize) / numZoomIncrements;
-
-        currentlyScrolling = false;
+        
 
         ResetCamera();
         
@@ -94,16 +91,21 @@ public class CameraMovementScript : MonoBehaviour
     }
 
     private void ZoomScroll() {
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
-        if (!currentlyScrolling && scrollInput != 0) {
-            currentlyScrolling = true;
-            Debug.Log("Started Scrolling");
+        // on my mouse each 0.1 of scroll input should be one zoom increment
+        double scrollInput = Math.Round(Input.GetAxis("Mouse ScrollWheel"), 1);
+
+        if (scrollInput > 0) {
+            // zoom in scroll input * 10 num times
+            for (int i = 0; i < scrollInput*10; i++) {
+                ZoomIn();
+            }
         }
-        else if (scrollInput != 0) {
-            Debug.Log("Continued Scrolling");
-        }
-        else if (currentlyScrolling && scrollInput == 0) {
-            Debug.Log("Stopped Scrolling");
+        else if (scrollInput < 0) {
+            // zoom in scroll input * 10 num times
+            // - as scroll input is negative
+            for (int i = 0; i < -scrollInput*10; i++) {
+                ZoomOut();
+            }
         }
     }
 
