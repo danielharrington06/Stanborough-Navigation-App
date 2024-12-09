@@ -825,4 +825,54 @@ public class DatabaseHelperScript : MonoBehaviour
             return "   ";
         }
     }
+
+    /**
+    This function uses SQL to get the camera's minimum size
+    */
+    public double GetMinCameraSize() {
+        return ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"minCameraSize\"");
+    }
+
+    /**
+    This function uses SQL to get the zoom step of the camera
+    */
+    public double GetNumCameraZoomIncrements() {
+        return ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"cameraNumZoomIncrement\"");
+    }
+
+    /**
+    This function uses SQL to get the map's maximum and minimum x and y values.
+    Returns in order: {maxX, minX, maxY, minY}
+    */
+    public float[] GetMapBounds() {
+        float maxX = Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"mapMaxX\""));
+        float minX = Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"mapMinX\""));
+        float maxY = Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"mapMaxY\""));
+        float minY = Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"mapMinY\""));
+
+        return new float[] {maxX, minX, maxY, minY};
+    }
+
+    /**
+    This function uses SQL to get the map buffer - a value that extends the camera's possible movement over the map
+    */
+    public float GetMapBuffer() {
+        return Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"mapBuffer\""));
+    }
+
+    /**
+    This function uses SQL to get the camera start coordinates
+    */
+    public Vector3 GetCameraStartCoordinates() {
+        // get from db, return z as 0 but dont take from it
+        return new Vector3 (Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"cameraStartX\"")), Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"cameraStartY\"")), 0);
+    }
+
+    /**
+    This function uses SQL to get the camera start size
+    */
+    public float GetCameraStartSize() {
+        return Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"cameraStartSize\""));
+    }
+    
 }
