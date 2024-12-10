@@ -13,6 +13,6 @@ public class UserSettingsScript : MonoBehaviour
     {
         floor = false; // false is floor 0, true is floor 1
         stepFree = true;
-        bool invertScroll = false;
+        invertScroll = false;
     }
 }

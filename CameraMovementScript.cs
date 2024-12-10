@@ -13,7 +13,30 @@ public class CameraMovementScript : MonoBehaviour
 
     private float mapBuffer, mapMaxX, mapMinX, mapMaxY, mapMinY;
 
+    private int lastWidth, lastHeight;
+
     void Start() {
+
+        CalculateBounds();
+        ResetCamera();
+        
+    }
+
+
+    void Update() {
+        
+        PanCamera();
+        ZoomScroll();
+
+        // check if screen width or height has changed
+        if (lastWidth != Screen.width || lastHeight != Screen.height) {
+            CalculateBounds();
+        }
+
+    }
+
+    // calculates bounds for the camera
+    private void CalculateBounds() {
 
         // get info for max bounds
         float[] mapBounds = databaseHelper.GetMapBounds();
@@ -26,7 +49,7 @@ public class CameraMovementScript : MonoBehaviour
         // calculate max camera size
         // the greatest possible world width/height divided by the camera width/height scaled to size 1
         // camera aspect is the half the actual width scaled to size one
-        float maxCameraSizeX = (mapMaxX-mapMinX)/(camera.aspect*2);
+        float maxCameraSizeX = (mapMaxX-mapMinX)/(camera.aspect*2); 
         float maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
         // choose the minimum of the two possible maximums
         maxCameraSize = Math.Min(maxCameraSizeX, maxCameraSizeY);
@@ -37,16 +60,18 @@ public class CameraMovementScript : MonoBehaviour
         // calculate the zoom step as the range of zoom divided by the number of increments
         int numZoomIncrements = Convert.ToInt32(databaseHelper.GetNumCameraZoomIncrements());
         cameraZoomStep = (maxCameraSize - minCameraSize) / numZoomIncrements;
-        
-        ResetCamera();
-        
-    }
 
+        // get screen width and height so can check when it changes
+        lastWidth = Screen.width;
+        lastHeight = Screen.height;
 
-    void Update() {
+        // zoom in just to avoid problems with resizing at max zoom out
+        if (camera.orthographicSize >= maxCameraSize - 0.1 ) {
+            ZoomIn();
+        }
+        // clamp camera
+        camera.transform.position = ClampCamera(camera.transform.position);
         
-        PanCamera();
-        ZoomScroll();
     }
 
     private void ResetCamera() {
@@ -97,14 +122,18 @@ public class CameraMovementScript : MonoBehaviour
         if (scrollInput > 0) {
             // zoom in scroll input * 10 num times
             for (int i = 0; i < scrollInput*10; i++) {
-                if (!userSettings.invertScroll) ZoomIn() ; else ZoomOut();
+                if (IsMouseWithinScreen()) {
+                    if (!userSettings.invertScroll) ZoomIn() ; else ZoomOut();
+                }
             }
         }
         else if (scrollInput < 0) {
             // zoom in scroll input * 10 num times
             // - as scroll input is negative
             for (int i = 0; i < -scrollInput*10; i++) {
-                if (!userSettings.invertScroll) ZoomOut() ; else ZoomIn();
+                if (IsMouseWithinScreen()) {
+                    if (!userSettings.invertScroll) ZoomOut() ; else ZoomIn();
+                }
             }
         }
     }
@@ -145,5 +174,13 @@ public class CameraMovementScript : MonoBehaviour
         float newY = Mathf.Clamp(targetPosition.y, minY, maxY);
 
         return new Vector3(newX, newY, targetPosition.z);
+    }
+
+    private bool IsMouseWithinScreen()
+    {
+        Vector3 mousePosition = Input.mousePosition;
+
+        // Check if the mouse is within the screen bounds
+        return mousePosition.x >= 0 && mousePosition.x <= Screen.width && mousePosition.y >= 0 && mousePosition.y <= Screen.height;
     }
 }
