@@ -123,7 +123,12 @@ public class CameraMovementScript : MonoBehaviour
             // zoom in scroll input * 10 num times
             for (int i = 0; i < scrollInput*10; i++) {
                 if (IsMouseWithinScreen()) {
-                    if (!userSettings.invertScroll) ZoomIn() ; else ZoomOut();
+                    if (!userSettings.invertScroll) {
+                        ZoomIn();
+                    } 
+                    else {
+                        ZoomOut();
+                    };
                 }
             }
         }
@@ -132,7 +137,12 @@ public class CameraMovementScript : MonoBehaviour
             // - as scroll input is negative
             for (int i = 0; i < -scrollInput*10; i++) {
                 if (IsMouseWithinScreen()) {
-                    if (!userSettings.invertScroll) ZoomOut() ; else ZoomIn();
+                    if (!userSettings.invertScroll) {
+                        ZoomOut();
+                    } 
+                    else {
+                        ZoomIn();
+                    };
                 }
             }
         }
