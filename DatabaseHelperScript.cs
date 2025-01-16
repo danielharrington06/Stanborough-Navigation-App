@@ -853,14 +853,14 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This function uses SQL to get the map buffer - a value that extends the camera's possible movement over the map
+    This function uses SQL to get the map buffer - a value that extends the camera's possible movement over the map.
     */
     public float GetMapBuffer() {
         return Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"mapBuffer\""));
     }
 
     /**
-    This function uses SQL to get the camera start coordinates
+    This function uses SQL to get the camera start coordinates.
     */
     public Vector3 GetCameraStartCoordinates() {
         // get from db, return z as 0 but dont take from it
@@ -868,10 +868,33 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This function uses SQL to get the camera start size
+    This function uses SQL to get the camera start size.
     */
     public float GetCameraStartSize() {
         return Convert.ToSingle(ExecuteScalarSelect("select setting_value from tblsetting where setting_name = \"cameraStartSize\""));
+    }
+    
+    /**
+    This function uses SQL to get all text labels for the specified floor.
+    */
+    public List<string[]> GetTextLabels(bool floor) {
+        int floorNum;
+        if (!floor) {
+            floorNum = 0;
+        }
+        else {
+            floorNum = 1;
+        }
+
+        var (textFields, textValues) = ExecuteSelect("select text_content, x_coordinate, y_coordinate from tbltextlabel where floor = " + Convert.ToString(floorNum));
+        List<string[]> result = new List<string[]>(); // setyp return data structure
+        for (int i = 0; i < textValues.Count; i++) {
+            result.Add(new string[3]); // append a new array
+            for (int j = 0; j < textValues[0].Count; j++) {
+                result[i][j] = Convert.ToString(textValues[i][j]);
+            }
+        }
+        return result;
     }
     
 }
