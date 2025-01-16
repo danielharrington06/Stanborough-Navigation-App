@@ -1,11 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using Unity.VisualScripting;
-using UnityEditor.Rendering;
 using UnityEngine;
 
 public class DijkstraPathfinderScript : MonoBehaviour
@@ -60,8 +57,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         ResetFields();
 
-        /* startRoom = "";
-        targetRoom = ""; */
     }
 
     void Update() {

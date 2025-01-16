@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class CameraMovementScript : MonoBehaviour
+public class CameraMovement : MonoBehaviour
 {
     [SerializeField] private new Camera camera; // maybe delete new
     private Vector3 dragOrigin; // to hold position of mouse in world space when click
