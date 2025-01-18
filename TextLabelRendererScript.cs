@@ -8,16 +8,19 @@ public class TextLabelRendererScript : MonoBehaviour
 {
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private UserSettingsScript userSettings;
+    [SerializeField] private GameObject worldSpaceCanvas;
+    [SerializeField] private GameObject textPrefab;
 
     private List<string[]> textLabelData;
     private bool floor;
     private List<GameObject> createdTextLabels;
-    public GameObject textPrefab;
-
+    
     void Start() {
         textLabelData = new List<string[]>();
         createdTextLabels = new List<GameObject>();
         floor = userSettings.floor;
+        textLabelData = databaseHelper.GetTextLabels(floor);
+        GenerateNewTextLabels();
     }
 
     void Update() {
@@ -26,7 +29,7 @@ public class TextLabelRendererScript : MonoBehaviour
             floor = userSettings.floor;
             // destroy current then generate new ones for new floor
             DestroyPreviousTextLabels();
-            databaseHelper.GetTextLabels(floor);
+            textLabelData = databaseHelper.GetTextLabels(floor);
             GenerateNewTextLabels();
         }
     }
@@ -48,21 +51,30 @@ public class TextLabelRendererScript : MonoBehaviour
             // instantiate the text prefab
             GameObject textObject = Instantiate(textPrefab, transform);
 
+            // make child of world space canvas
+            textObject.transform.SetParent(worldSpaceCanvas.transform, false);
+            
             // adjust position
             textObject.transform.position = new Vector3(Convert.ToSingle(textLabelData[i][1]), Convert.ToSingle(textLabelData[i][2]), 0);
 
-            // Set the text content
+            // get the tmp component
             TextMeshPro textComponent = textObject.GetComponent<TextMeshPro>();
-            if (textComponent != null)
-            {
+            if (textComponent != null) {
+                // set the text content
                 textComponent.text = textLabelData[i][0];
+                // set the font size
+                textComponent.fontSize = Convert.ToSingle(textLabelData[i][3]);
+
+                // set the width and height by adjusting the rect transform
+                RectTransform rectTransform = textComponent.GetComponent<RectTransform>();
+                if (rectTransform != null) {
+                    rectTransform.sizeDelta = new Vector2(Convert.ToSingle(textLabelData[i][4]), Convert.ToSingle(textLabelData[i][5]));
+                }
+
             }
 
             // add to the list of created labels
             createdTextLabels.Add(textObject);
         }
-        
     }
-
-
 }

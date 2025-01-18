@@ -886,10 +886,10 @@ public class DatabaseHelperScript : MonoBehaviour
             floorNum = 1;
         }
 
-        var (textFields, textValues) = ExecuteSelect("select text_content, x_coordinate, y_coordinate from tbltextlabel where floor = " + Convert.ToString(floorNum));
+        var (textFields, textValues) = ExecuteSelect("select text_content, x_coordinate, y_coordinate, font_size, width, height from tbltextlabel where floor = " + Convert.ToString(floorNum));
         List<string[]> result = new List<string[]>(); // setyp return data structure
         for (int i = 0; i < textValues.Count; i++) {
-            result.Add(new string[3]); // append a new array
+            result.Add(new string[6]); // append a new array
             for (int j = 0; j < textValues[0].Count; j++) {
                 result[i][j] = Convert.ToString(textValues[i][j]);
             }
