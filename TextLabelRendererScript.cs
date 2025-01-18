@@ -57,8 +57,11 @@ public class TextLabelRendererScript : MonoBehaviour
             // adjust position
             textObject.transform.position = new Vector3(Convert.ToSingle(textLabelData[i][1]), Convert.ToSingle(textLabelData[i][2]), 0);
 
+            // change game object name
+            textObject.name = "TextLabel " + textLabelData[i][0];
+
             // get the tmp component
-            TextMeshPro textComponent = textObject.GetComponent<TextMeshPro>();
+            TextMeshProUGUI textComponent = textObject.GetComponent<TextMeshProUGUI>();
             if (textComponent != null) {
                 // set the text content
                 textComponent.text = textLabelData[i][0];
