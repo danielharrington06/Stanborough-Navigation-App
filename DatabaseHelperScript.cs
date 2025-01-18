@@ -909,10 +909,10 @@ public class DatabaseHelperScript : MonoBehaviour
             floorNum = 1;
         }
 
-        var (toiletFields, toiletValues) = ExecuteSelect("select x_coordinate, y_coordinate, toilet_type from tbltoiletsymbol where floor = " + Convert.ToString(floorNum));
+        var (toiletFields, toiletValues) = ExecuteSelect("select toilet_id, x_coordinate, y_coordinate, toilet_type from tbltoiletsymbol where floor = " + Convert.ToString(floorNum));
         List<string[]> result = new List<string[]>(); // setyp return data structure
         for (int i = 0; i < toiletValues.Count; i++) {
-            result.Add(new string[3]); // append a new array
+            result.Add(new string[4]); // append a new array
             for (int j = 0; j < toiletValues[0].Count; j++) {
                 result[i][j] = Convert.ToString(toiletValues[i][j]);
             }

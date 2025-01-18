@@ -116,7 +116,7 @@ public class TextToiletRendererScript : MonoBehaviour
         for (int i = 0; i < toiletSymbolData.Count; i++) {
             // instantiate the toilet prefab according to which type it is
             GameObject toiletObject;
-            switch (toiletSymbolData[i][2]) {
+            switch (toiletSymbolData[i][3]) {
                 case "B": // boys toilet
                     toiletObject = Instantiate(toiletPrefabs[0], transform);
                     break;
@@ -132,10 +132,10 @@ public class TextToiletRendererScript : MonoBehaviour
             toiletObject.transform.SetParent(worldSpaceCanvas.transform, false);
             
             // adjust position
-            toiletObject.transform.position = new Vector3(Convert.ToSingle(toiletSymbolData[i][0]), Convert.ToSingle(toiletSymbolData[i][1]), 0);
+            toiletObject.transform.position = new Vector3(Convert.ToSingle(toiletSymbolData[i][1]), Convert.ToSingle(toiletSymbolData[i][2]), 0);
 
             // change game object name
-            toiletObject.name = "ToiletSymbol " + textLabelData[i][0] + " " + toiletSymbolData[2];
+            toiletObject.name = "ToiletSymbol " + textLabelData[i][0] + " " + toiletSymbolData[i][3];
 
             // add to the list of created labels
             createdToiletSymbols.Add(toiletObject);
