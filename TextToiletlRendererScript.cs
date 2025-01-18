@@ -4,23 +4,35 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class TextLabelRendererScript : MonoBehaviour
+public class TextToiletRendererScript : MonoBehaviour
 {
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private UserSettingsScript userSettings;
     [SerializeField] private GameObject worldSpaceCanvas;
     [SerializeField] private GameObject textPrefab;
 
-    private List<string[]> textLabelData;
     private bool floor;
+
+    private List<string[]> textLabelData;
     private List<GameObject> createdTextLabels;
+
+    private List<string[]> toiletSymbolData;
+    private List<GameObject> createdToiletSymbols;
     
     void Start() {
+        
+        floor = userSettings.floor;
+
         textLabelData = new List<string[]>();
         createdTextLabels = new List<GameObject>();
-        floor = userSettings.floor;
+        
+        toiletSymbolData = new List<string[]>();
+        createdToiletSymbols = new List<GameObject>();
+
         textLabelData = databaseHelper.GetTextLabels(floor);
         GenerateNewTextLabels();
+        toiletSymbolData = databaseHelper.GetToiletSymbols(floor);
+        GenerateNewToiletSymbols();
     }
 
     void Update() {
