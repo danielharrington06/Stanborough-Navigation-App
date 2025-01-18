@@ -285,7 +285,6 @@ public class MatrixBuilderScript : MonoBehaviour
             for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
                 for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                     if (infoMatrix[rowNum, colNum] == 'S') {
-                        //UnityEngine.Debug.Log($"Removed stairs at {rowNum}, {colNum}");
                         if (rowNum != 13 && colNum != 13) {
                             timeMatrix[rowNum, colNum] = 0;
                         }
