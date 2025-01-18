@@ -37,7 +37,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public TimeSpan estimatedTime;
     public TimeSpan estimatedTimeOfArrival;
 
-    public List<int> dijkstraPath; // path of node id's
+    private List<int> dijkstraPath; // path of node id's
 
     public List<double[]> floor0Path; // path of coordinates
     public List<double[]> floor1Path; // path of coordinates
