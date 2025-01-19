@@ -8,7 +8,9 @@ public class MapMeshRendererScript : MonoBehaviour
     [SerializeField] private UserSettingsScript userSettings;
     public Vector3[] linePoints;
     public int[] lineTriangles;
+
     private bool floor;
+    private bool mapFocussed;
 
     // line properties
     public float lineWidth = 0.05f; // line width
@@ -25,13 +27,34 @@ public class MapMeshRendererScript : MonoBehaviour
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
+
         floor = userSettings.floor;
+        mapFocussed = userSettings.mapFocussed;
+
         DrawLines();
     }
 
     void Update() {
+        
+        // check for change in map focus
+        if (userSettings.mapFocussed != mapFocussed) {
+            mapFocussed = userSettings.mapFocussed;
+            if (!mapFocussed) { // changed to unfocussed so clear mesh
+                mesh.Clear();
+            }
+            else { // changed to focussed so redraw mesh
+                DrawLines();
+            }
+        }
+        
+        // check for change in floor
+        if (userSettings.floor != floor && mapFocussed) {
+            floor = userSettings.floor;
+            DrawLines();
+        }
+
         // check for a mouse click
-        if (Input.GetMouseButtonDown(0)) {
+        /* if (Input.GetMouseButtonDown(0)) {
 
             // get the mouse position in screen coordinates
             Vector3 screenPosition = Input.mousePosition;
@@ -41,11 +64,8 @@ public class MapMeshRendererScript : MonoBehaviour
 
             // show click in unity console
             Debug.Log(worldClick);
-        }
-        if (userSettings.floor != floor) {
-            floor = userSettings.floor;
-            DrawLines();
-        }
+        } */
+        
     }
 
     void DrawLines() {

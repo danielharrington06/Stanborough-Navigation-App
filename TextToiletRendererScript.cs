@@ -13,6 +13,7 @@ public class TextToiletRendererScript : MonoBehaviour
     [SerializeField] private GameObject[] toiletPrefabs;
 
     private bool floor;
+    private bool mapFocussed;
 
     private List<string[]> textLabelData;
     private List<GameObject> createdTextLabels;
@@ -23,6 +24,7 @@ public class TextToiletRendererScript : MonoBehaviour
     void Start() {
         
         floor = userSettings.floor;
+        mapFocussed = userSettings.mapFocussed;
 
         textLabelData = new List<string[]>();
         createdTextLabels = new List<GameObject>();
@@ -31,32 +33,47 @@ public class TextToiletRendererScript : MonoBehaviour
         createdToiletSymbols = new List<GameObject>();
 
         textLabelData = databaseHelper.GetTextLabels(floor);
-        GenerateNewTextLabels();
+        InstantiateTextLabels();
         toiletSymbolData = databaseHelper.GetToiletSymbols(floor);
-        GenerateNewToiletSymbols();
+        InstantiateToiletSymbols();
     }
 
     void Update() {
+        // check for change in map focus
+        if (userSettings.mapFocussed != mapFocussed) {
+            mapFocussed = userSettings.mapFocussed;
+            if (!mapFocussed) { // changed to unfocussed so destroy previous text and toilet
+                DestroyTextLabels();
+                DestroyToiletSymbols();
+            }
+            else { // changed to focussed so check db and redo text and toilet
+                textLabelData = databaseHelper.GetTextLabels(floor);
+                InstantiateTextLabels();
+                toiletSymbolData = databaseHelper.GetToiletSymbols(floor);
+                InstantiateToiletSymbols();
+            }
+        }
 
-        if (userSettings.floor != floor) {
+        // when floor is toggled, if map is focussed, redo text and toilets
+        if (userSettings.floor != floor && userSettings.mapFocussed) {
             floor = userSettings.floor;
 
             // destroy current then generate new text labels for new floor
-            DestroyPreviousTextLabels();
+            DestroyTextLabels();
             textLabelData = databaseHelper.GetTextLabels(floor);
-            GenerateNewTextLabels();
+            InstantiateTextLabels();
 
             // destroy current then generate new toilet symbols for new floor
-            DestroyPreviousToiletSymbols();
+            DestroyToiletSymbols();
             toiletSymbolData = databaseHelper.GetToiletSymbols(floor);
-            GenerateNewToiletSymbols();
+            InstantiateToiletSymbols();
         }
     }
 
     /**
     This function destoys all current text labels.
     */
-    private void DestroyPreviousTextLabels() {
+    private void DestroyTextLabels() {
         for (int i = 0; i < createdTextLabels.Count; i++) {
             Destroy(createdTextLabels[i]);
         }
@@ -65,7 +82,7 @@ public class TextToiletRendererScript : MonoBehaviour
     /**
     This function generates new text labels and instantiates them.
     */
-    public void GenerateNewTextLabels() {
+    public void InstantiateTextLabels() {
         for (int i = 0; i < textLabelData.Count; i++) {
             // instantiate the text prefab
             GameObject textObject = Instantiate(textPrefab, transform);
@@ -74,7 +91,7 @@ public class TextToiletRendererScript : MonoBehaviour
             textObject.transform.SetParent(worldSpaceCanvas.transform, false);
             
             // adjust position
-            textObject.transform.position = new Vector3(Convert.ToSingle(textLabelData[i][1]), Convert.ToSingle(textLabelData[i][2]), 0);
+            textObject.transform.position = new Vector3(Convert.ToSingle(textLabelData[i][1]), Convert.ToSingle(textLabelData[i][2]), transform.position.z);
 
             // change game object name
             textObject.name = "TextLabel " + textLabelData[i][0];
@@ -103,7 +120,7 @@ public class TextToiletRendererScript : MonoBehaviour
     /**
     This function destoys all current toilet symbols.
     */
-    private void DestroyPreviousToiletSymbols() {
+    private void DestroyToiletSymbols() {
         for (int i = 0; i < createdToiletSymbols.Count; i++) {
             Destroy(createdToiletSymbols[i]);
         }
@@ -112,7 +129,7 @@ public class TextToiletRendererScript : MonoBehaviour
     /**
     This function generates new text labels and instantiates them.
     */
-    public void GenerateNewToiletSymbols() {
+    public void InstantiateToiletSymbols() {
         for (int i = 0; i < toiletSymbolData.Count; i++) {
             // instantiate the toilet prefab according to which type it is
             GameObject toiletObject;

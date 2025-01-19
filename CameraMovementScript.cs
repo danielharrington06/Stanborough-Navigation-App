@@ -4,19 +4,21 @@ using UnityEngine;
 public class CameraMovement : MonoBehaviour
 {
     [SerializeField] private new Camera camera; // maybe delete new
-    private Vector3 dragOrigin; // to hold position of mouse in world space when click
+    
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private UserSettingsScript userSettings;
 
-    [SerializeField]
     private float cameraZoomStep, maxCameraSize, minCameraSize;
+    private Vector3 dragOrigin; // to hold position of mouse in world space when click
 
     private float mapBuffer, mapMaxX, mapMinX, mapMaxY, mapMinY;
-
     private int lastWidth, lastHeight;
+    
+    private bool mapFocussed;
 
     void Start() {
 
+        mapFocussed = userSettings.mapFocussed;
         CalculateBounds();
         ResetCamera();
         
@@ -25,14 +27,19 @@ public class CameraMovement : MonoBehaviour
 
     void Update() {
         
-        PanCamera();
-        ZoomScroll();
+        if (userSettings.mapFocussed != mapFocussed) {
+            mapFocussed = userSettings.mapFocussed;
+        }
 
+        if (mapFocussed) {
+            PanCamera();
+            ZoomScroll();
+        }
+        
         // check if screen width or height has changed
         if (lastWidth != Screen.width || lastHeight != Screen.height) {
             CalculateBounds();
         }
-
     }
 
     // calculates bounds for the camera

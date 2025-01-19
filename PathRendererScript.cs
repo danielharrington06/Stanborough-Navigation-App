@@ -27,7 +27,15 @@ public class PathRendererScript : MonoBehaviour
         // check if showResults in dp is different from draw Path
         // if so, set drawPath as apprpriate and then change path edges
         // only draw/clear path when dijkstra starts or ends or is defocussed
-        if (dijkstraPathfinder.showResults != drawPath || userSettings.floor != floor) {
+
+        if (userSettings.mapFocussed != drawPath) {
+            if (!userSettings.mapFocussed) { // if unfocussed, drawPath should be false
+                drawPath = userSettings.mapFocussed;
+                mesh.Clear();
+            }
+            else{} // otherwise, drawPath can keep its value
+        }
+        if ((dijkstraPathfinder.showResults != drawPath || userSettings.floor != floor) && userSettings.mapFocussed) {
             floor = userSettings.floor;
             drawPath = dijkstraPathfinder.showResults;
             if (drawPath == true) {
@@ -39,7 +47,6 @@ public class PathRendererScript : MonoBehaviour
                 mesh.Clear();
             }
         }
-        DrawPath();
     }
 
     void DrawPath() {
