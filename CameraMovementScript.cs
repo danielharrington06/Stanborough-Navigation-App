@@ -7,20 +7,31 @@ public class CameraMovement : MonoBehaviour
     
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private UserSettingsScript userSettings;
+    [SerializeField] private SearchManagerScript searchManager;
 
-    private float cameraZoomStep, maxCameraSize, minCameraSize;
+    public float cameraZoomStep, maxCameraSize, minCameraSize;
     private Vector3 dragOrigin; // to hold position of mouse in world space when click
 
     private float mapBuffer, mapMaxX, mapMinX, mapMaxY, mapMinY;
     private int lastWidth, lastHeight;
+
+    // these set the bounds for camera considering UI components
+    private float rightUIMaxX;
+    private float leftUIMinX;
+    private float relativeScreenWidth;
+
+    private float UIcameraAspectWidth;
     
     private bool mapFocussed;
+    private bool cameraMaxSize;
 
     void Start() {
 
         mapFocussed = userSettings.mapFocussed;
         CalculateBounds();
         ResetCamera();
+
+        cameraMaxSize = false;
         
     }
 
@@ -34,6 +45,12 @@ public class CameraMovement : MonoBehaviour
         if (mapFocussed) {
             PanCamera();
             ZoomScroll();
+            if (camera.orthographicSize == maxCameraSize && !cameraMaxSize) {
+                cameraMaxSize = true;
+            }
+            else if (camera.orthographicSize != maxCameraSize && cameraMaxSize){
+                cameraMaxSize = false;
+            }
         }
         
         // check if screen width or height has changed
@@ -43,7 +60,7 @@ public class CameraMovement : MonoBehaviour
     }
 
     // calculates bounds for the camera
-    private void CalculateBounds() {
+    public void CalculateBounds() {
 
         // get info for max bounds
         float[] mapBounds = databaseHelper.GetMapBounds();
@@ -53,11 +70,31 @@ public class CameraMovement : MonoBehaviour
         mapMaxY = mapBounds[2] + mapBuffer;
         mapMinY = mapBounds[3] - mapBuffer;
 
+        rightUIMaxX = 8.27f;
+        leftUIMinX = -8.27f;
+        relativeScreenWidth = 9.6f; // 9.6 is half width of the screen in world space
+
         // calculate max camera size
         // the greatest possible world width/height divided by the camera width/height scaled to size 1
-        // camera aspect is the half the actual width scaled to size one
-        float maxCameraSizeX = (mapMaxX-mapMinX)/(camera.aspect*2); 
-        float maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
+        // camera aspect is the half the actual width when height is size one
+        // when search panel open, do a bit different
+        /* float maxCameraSizeX = (mapMaxX-mapMinX)/(camera.aspect*2); 
+        float maxCameraSizeY = (mapMaxY-mapMinY)/(1*2); */
+
+        float maxCameraSizeX;
+        float maxCameraSizeY;
+
+        if (!searchManager.searchOpen) { // normal but considering UI also
+            UIcameraAspectWidth = camera.aspect*(rightUIMaxX - leftUIMinX)/(2*relativeScreenWidth);
+            maxCameraSizeX = (mapMaxX-mapMinX)/(UIcameraAspectWidth*2); 
+            maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
+        }
+        else {
+            UIcameraAspectWidth = camera.aspect*(rightUIMaxX - searchManager.searchPanelMinX)/(2*relativeScreenWidth);
+            maxCameraSizeX = (mapMaxX-mapMinX)/(UIcameraAspectWidth*2); 
+            maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
+        }
+
         // choose the minimum of the two possible maximums
         maxCameraSize = Math.Min(maxCameraSizeX, maxCameraSizeY);
 
@@ -177,12 +214,18 @@ public class CameraMovement : MonoBehaviour
 
         // get camera width and height (which are both actually half the width and height)
         float cameraHeight = camera.orthographicSize;
-        float cameraWidth = camera.orthographicSize * camera.aspect;
+        float cameraWidth = camera.orthographicSize * UIcameraAspectWidth;
 
         // can be done as such as the camera height and width is half the actual
         // define max and min x and y for camera position
         float maxX = mapMaxX - cameraWidth;
         float minX = mapMinX + cameraWidth;
+        if (searchManager.searchOpen) {
+            float cameraMidpoint = (2*relativeScreenWidth + searchManager.searchPanelMinX - rightUIMaxX)/2;
+            Debug.Log(UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth));
+            maxX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
+            minX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
+        }
         float maxY = mapMaxY - cameraHeight;
         float minY = mapMinY + cameraHeight;
 
@@ -199,5 +242,12 @@ public class CameraMovement : MonoBehaviour
 
         // Check if the mouse is within the screen bounds
         return mousePosition.x >= 0 && mousePosition.x <= Screen.width && mousePosition.y >= 0 && mousePosition.y <= Screen.height;
+    }
+
+    public void SetMaxZoomOutIfAlreadyZoomedOut() {
+        if (cameraMaxSize) {
+            camera.orthographicSize = maxCameraSize;
+            camera.transform.position = ClampCamera(camera.transform.position);
+        }
     }
 }

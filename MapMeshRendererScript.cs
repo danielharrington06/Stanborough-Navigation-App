@@ -54,7 +54,7 @@ public class MapMeshRendererScript : MonoBehaviour
         }
 
         // check for a mouse click
-        /* if (Input.GetMouseButtonDown(0)) {
+        if (Input.GetMouseButtonDown(0)) {
 
             // get the mouse position in screen coordinates
             Vector3 screenPosition = Input.mousePosition;
@@ -64,7 +64,7 @@ public class MapMeshRendererScript : MonoBehaviour
 
             // show click in unity console
             Debug.Log(worldClick);
-        } */
+        }
         
     }
 
