@@ -16,7 +16,7 @@ public class ToggleSwitch : MonoBehaviour, IPointerClickHandler
     private Slider _slider;
 
     [Header("Animation")] 
-    [SerializeField, Range(0, 1f)] private float animationDuration = 0.5f;
+    [SerializeField, Range(0, 1f)] private float animationDuration = 0.25f;
     [SerializeField] private AnimationCurve slideEase =
         AnimationCurve.EaseInOut(0, 0, 1, 1);
 
@@ -93,7 +93,7 @@ public class ToggleSwitch : MonoBehaviour, IPointerClickHandler
     }
     
     
-    private void SetStateAndStartAnimation(bool state)
+    public void SetStateAndStartAnimation(bool state)
     {
         _previousValue = CurrentValue;
         CurrentValue = state;

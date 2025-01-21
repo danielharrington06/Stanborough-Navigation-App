@@ -117,7 +117,7 @@ public class CameraMovement : MonoBehaviour
         
     }
 
-    private void ResetCamera() {
+    public void ResetCamera() {
 
         // now start camera at a specific size and coordinates
         Vector3 dbStartCoordinates = databaseHelper.GetCameraStartCoordinates();

@@ -90,8 +90,14 @@ public class DijkstraPathfinderScript : MonoBehaviour
         //UnityEngine.Debug.Log("tST" + userSettings.stepFree);
         if (!userSettings.stepFree) { // not step free, so have to follow one-way
             timeMatrix = matrixBuilder.timeMatrixStairs;
-            distanceMatrix = matrixBuilder.distanceMatrixOneWay;
-            infoMatrix = matrixBuilder.infoMatrixOneWay;
+            if (userSettings.oneWaySystem) {
+                distanceMatrix = matrixBuilder.distanceMatrixOneWay;
+                infoMatrix = matrixBuilder.infoMatrixOneWay;
+            }
+            else {
+                distanceMatrix = matrixBuilder.distanceMatrixDefault;
+                infoMatrix = matrixBuilder.infoMatrixDefault;
+            }
         }
         else {
             timeMatrix = matrixBuilder.timeMatrixLifts;
@@ -450,7 +456,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 // query db for edge info to figure out if it is directional and the nodes
                 string[] startEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(startRoomRecord[2]));
                 
-                if (startEdgeInfo[5] == "True" && !userSettings.stepFree) { // directional edge 
+                if (startEdgeInfo[5] == "True" && !userSettings.stepFree && userSettings.oneWaySystem) { // directional edge 
                     // so use node 2 as only node as user can at first only walk from room to this edge
                     startLocationPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
                 }
@@ -488,7 +494,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 string[] targetEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(targetRoomRecord[2]));
                 
                 
-                if (targetEdgeInfo[5] == "True" && !userSettings.stepFree) { // directional edge 
+                if (targetEdgeInfo[5] == "True" && !userSettings.stepFree && userSettings.oneWaySystem) { // directional edge 
                     // so use node 1 as user has to follow one one way system on entrance to this edge
                     targetLocationPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
                 }
@@ -727,12 +733,10 @@ public class DijkstraPathfinderScript : MonoBehaviour
     /**
     This procedure goes through an array of boundary nodes and purges them from the time matrix
     if the target/start is none of them nor any nodes which are beyond the school gates.
-    Which ones it removes depends on the user type.
     */
     public void PurgeEdges() {
         int[] gateNodes = {71, 56, 67, 2};
         int[] beyondBoundaryNodes = {1, 68, 57, 69, 70};
-        int[] studentNoNodes = {34};
 
         bool needToUseBoundaryNodes = false;
 
@@ -788,7 +792,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public void CarryOutAndInterpretPathfinding() {
 
-        //matrixBuilder.BuildMatricesForPathfinding();
+        //matrixBuilder.BuildMatricesForPathfinding;
         ResetFields();
 
         // set fields startRoom and targetRoom
@@ -1352,5 +1356,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
         Console.Write("\n");
 
         Console.WriteLine($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
+    }
+
+    /**
+    This function sets showResults to false.
+    */
+    public void HidePathfindingResults() {
+        showResults = false;
     }
 }

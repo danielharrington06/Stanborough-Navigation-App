@@ -56,13 +56,7 @@ public class MatrixBuilderScript : MonoBehaviour
         edgeVelocities[4, 0] = databaseHelper.GetVelocityValue(edgeTypes[4], false); // lift normal
         edgeVelocities[4, 1] = databaseHelper.GetVelocityValue(edgeTypes[4], true); // lift slow
 
-        // now check settings
-        useTimeOfDayForCalculationUser = true; // sourced from user settings
-        useTimeOfDayForCalculationDB = databaseHelper.GetUseTimeOfDayDB(); // sourced from DB settings
-
-        // if DB sets it as false, then it is false, otherwise, follow user's settings
-        // this is just 'and' gate
-        useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
+        CheckTimeOfDayEstimation();
 
         // get user settings for step free access
         stepFree = userSettings.stepFree; // false means using stairs
@@ -322,7 +316,12 @@ public class MatrixBuilderScript : MonoBehaviour
         // fill time matrix stairs and time matrix lifts
 
         // not step free, so one way system
+        if (userSettings.oneWaySystem) {
         timeMatrixStairs = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixOneWay, infoMatrixOneWay), infoMatrixOneWay, false);
+        }
+        else {
+        timeMatrixStairs = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixDefault, infoMatrixDefault), infoMatrixDefault, false);
+        }
 
         // step free so no one way system
         timeMatrixLifts = AdjustStairsLifts(timeMatrixDefault, infoMatrixDefault, true);
@@ -331,5 +330,19 @@ public class MatrixBuilderScript : MonoBehaviour
         stopwatch.Stop();
 
         UnityEngine.Debug.Log($"Elapsed Matrix Time: {stopwatch.ElapsedMilliseconds} ms\n");
+        stopwatch.Reset();
+    }
+
+    /**
+    This function chekcs if time estimation should be used in calculations.
+    */
+    public void CheckTimeOfDayEstimation() {
+        // now check settings
+        useTimeOfDayForCalculationUser = userSettings.useTimeOfDayForCalculation; // sourced from user settings
+        useTimeOfDayForCalculationDB = databaseHelper.GetUseTimeOfDayDB(); // sourced from DB settings
+
+        // if DB sets it as false, then it is false, otherwise, follow user's settings
+        // this is just 'and' gate
+        useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
     }
 }
