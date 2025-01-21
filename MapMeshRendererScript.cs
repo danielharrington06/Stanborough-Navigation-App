@@ -22,7 +22,6 @@ public class MapMeshRendererScript : MonoBehaviour
     bool click1Active;
     bool click2Active;
     Vector3 worldClick;
-    int time;
 
     void Start() {
         mesh = new Mesh();
