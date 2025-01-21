@@ -221,7 +221,6 @@ public class CameraMovement : MonoBehaviour
         float minX = mapMinX + cameraWidth;
         if (searchManager.searchOpen) {
             float cameraMidpoint = (2*relativeScreenWidth + searchManager.searchPanelMinX - rightUIMaxX)/2;
-            Debug.Log(UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth));
             maxX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
             minX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
         }
