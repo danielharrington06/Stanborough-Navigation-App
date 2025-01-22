@@ -261,7 +261,6 @@ public class MatrixBuilderScript : MonoBehaviour
             }
         }
 
-        //return isNearCongestionTime;
         return isNearCongestionTime;
     }
 

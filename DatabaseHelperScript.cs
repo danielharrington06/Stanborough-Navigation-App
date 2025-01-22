@@ -7,6 +7,7 @@ using MySqlConnector;
 public class DatabaseHelperScript : MonoBehaviour
 {
     // fields
+    [SerializeField] private UserSettingsScript userSettings;
     public MySqlConnection connection;
     private string server;
     private string database;
@@ -797,7 +798,8 @@ public class DatabaseHelperScript : MonoBehaviour
             else if (roomRecord[2] != "" && roomRecord[3] == ""){
                 // is connected to an edge
                 string[] edgeRecord = GetEdgeRecord(Convert.ToInt32(roomRecord[2]));
-                if (edgeRecord[5] == "False") {
+                // undirectional if actually undirectional or one-way system is off
+                if (edgeRecord[5] == "False" || !userSettings.oneWaySystem) { 
                     // room connected to edge that is undirection
                     return "REU";
                 }
