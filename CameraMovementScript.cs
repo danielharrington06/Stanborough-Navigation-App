@@ -75,10 +75,10 @@ public class CameraMovement : MonoBehaviour
         mapMaxY = mapBounds[2] + mapBuffer;
         mapMinY = mapBounds[3] - mapBuffer;
 
-        rightUIMaxX = 8.27f;
-        leftUIMinX = -8.27f;
-        searchPanelMinX = -3.36f;
-        relativeScreenWidth = 9.6f; // 9.6 is half width of the screen in world space
+        rightUIMaxX = 9.34f;
+        leftUIMinX = -9.34f;
+        searchPanelMinX = -4.44f;
+        relativeScreenWidth = 10.78f; // 9.6 is half width of the screen in world space
 
         // calculate max camera size
         // the greatest possible world width/height divided by the camera width/height scaled to size 1
