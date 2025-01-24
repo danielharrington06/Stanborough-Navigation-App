@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class CameraMovement : MonoBehaviour
@@ -18,12 +19,15 @@ public class CameraMovement : MonoBehaviour
     // these set the bounds for camera considering UI components
     private float rightUIMaxX;
     private float leftUIMinX;
+    private float searchPanelMinX;
     private float relativeScreenWidth;
 
     private float UIcameraAspectWidth;
     
     private bool mapFocussed;
     private bool cameraMaxSize;
+
+    private bool initialClickValid;
 
     void Start() {
 
@@ -32,6 +36,8 @@ public class CameraMovement : MonoBehaviour
         ResetCamera();
 
         cameraMaxSize = false;
+
+        initialClickValid = true;
         
     }
 
@@ -71,6 +77,7 @@ public class CameraMovement : MonoBehaviour
 
         rightUIMaxX = 8.27f;
         leftUIMinX = -8.27f;
+        searchPanelMinX = -3.36f;
         relativeScreenWidth = 9.6f; // 9.6 is half width of the screen in world space
 
         // calculate max camera size
@@ -89,7 +96,7 @@ public class CameraMovement : MonoBehaviour
             maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
         }
         else {
-            UIcameraAspectWidth = camera.aspect*(rightUIMaxX - searchManager.searchPanelMinX)/(2*relativeScreenWidth);
+            UIcameraAspectWidth = camera.aspect*(rightUIMaxX - searchPanelMinX)/(2*relativeScreenWidth);
             maxCameraSizeX = (mapMaxX-mapMinX)/(UIcameraAspectWidth*2); 
             maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
         }
@@ -146,11 +153,18 @@ public class CameraMovement : MonoBehaviour
 
         // save position of the camera in world space when the drag starts (click down)
         if (Input.GetMouseButtonDown(0)) { // drag starts (mouse button DOWN)
-            dragOrigin = camera.ScreenToWorldPoint(Input.mousePosition);
+            // check if search panel is open and if so, if the click is outside the search panel
+            if (!userSettings.searchOpen || Input.mousePosition.x > (relativeScreenWidth+searchPanelMinX)/(relativeScreenWidth*2)*Screen.width) {
+                dragOrigin = camera.ScreenToWorldPoint(Input.mousePosition);
+                initialClickValid = true;
+            }
+            else {
+                initialClickValid = false;
+            }
         }
 
         // if stil held
-        if (Input.GetMouseButton(0)) {
+        if (Input.GetMouseButton(0) && initialClickValid) { // drag continues (mouse button HELD)
             // calculate difference from drag origin
             Vector3 difference = dragOrigin - camera.ScreenToWorldPoint(Input.mousePosition);
 
@@ -220,7 +234,7 @@ public class CameraMovement : MonoBehaviour
         float maxX = mapMaxX - cameraWidth;
         float minX = mapMinX + cameraWidth;
         if (searchManager.searchOpen) {
-            float cameraMidpoint = (2*relativeScreenWidth + searchManager.searchPanelMinX - rightUIMaxX)/2;
+            float cameraMidpoint = (2*relativeScreenWidth + searchPanelMinX - rightUIMaxX)/2;
             maxX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
             minX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
         }
@@ -246,6 +260,13 @@ public class CameraMovement : MonoBehaviour
         if (cameraMaxSize) {
             camera.orthographicSize = maxCameraSize;
             camera.transform.position = ClampCamera(camera.transform.position);
+        }
+    }
+
+    public void SetCameraPositionIfSearchPanel() {
+        if (cameraMaxSize) {
+            camera.orthographicSize = maxCameraSize;
+            camera.transform.position = ClampCamera(new Vector3(0.6849995f, 5f, camera.transform.position.z));
         }
     }
 }

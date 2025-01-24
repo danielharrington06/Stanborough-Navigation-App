@@ -15,6 +15,7 @@ public class UserSettingsScript : MonoBehaviour
     [Header ("Non-User Settings")]
     public bool floor;
     public bool mapFocussed;
+    public bool searchOpen;
 
     [Header ("User Settings")]
     public bool oneWaySystem;
@@ -97,5 +98,13 @@ public class UserSettingsScript : MonoBehaviour
 
     public void SetInvertScrollOff() {
         invertScroll = false;
+    }
+
+    public void SetSearchOpen() {
+        searchOpen = true;
+    }
+
+    public void SetSearchClosed() {
+        searchOpen = false;
     }
 }
