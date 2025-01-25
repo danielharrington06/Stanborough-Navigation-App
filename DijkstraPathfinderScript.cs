@@ -79,8 +79,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
         startDijkstra = false;
 
-        
-
     }
     // methods
 
@@ -1524,5 +1522,14 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         startLocationInput.text = userStartLocation;
         targetLocationInput.text = userTargetLocation;
+        
+        showResults = false;
+    }
+
+    /**
+    This function sets start dijkstra to true.
+    */
+    public void StartDijkstra() {
+        startDijkstra = true;
     }
 }
