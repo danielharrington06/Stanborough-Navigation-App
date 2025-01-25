@@ -921,5 +921,97 @@ public class DatabaseHelperScript : MonoBehaviour
         }
         return result;
     }
+
+    /**
+    This function uses SQL to return true if a room id exists within tblRoom.
+    */
+    public bool RoomIDExists(string roomCode) {
+        return Convert.ToInt32(ExecuteScalarSelect("select count(room_id) from tblRoom where room_id = \"" + roomCode + "\"")) == 1;
+    }
+
+    /**
+    This function uses SQL to return true if a room record exists for the room name.
+    Not case sensitive.
+    */
+    public bool RoomNameExists(string roomName) {
+        return Convert.ToInt32(ExecuteScalarSelect("select count(room_id) from tblRoom where room_name = \"" + roomName + "\"")) == 1;
+    }
+
+    /**
+    This function uses SQL to return the exact room id for the input room name.
+    */
+    public string GetRoomIDFromName(string roomName) {
+        var (roomFields, roomValues) = ExecuteSelect("select room_id from tblRoom where room_name = \"" + roomName + "\"");
+        return Convert.ToString(roomValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the number of records where the input is a substring of room name.
+    */
+    public int GetRoomNameSubstringCount(string roomName) {
+        return Convert.ToInt32(ExecuteScalarSelect("select count(room_id) from tblRoom where room_name like \"%" + roomName + "%\""));
+    }
+
+    /**
+    This function uses SQL to return the exact room_id where there is only one record where the input is a substring of the room name.
+    */
+    public string GetRoomIDFromSubstringName(string roomName) {
+        var (roomFields, roomValues) = ExecuteSelect("select room_id from tblRoom where room_name like \"%" + roomName + "%\"");
+        return Convert.ToString(roomValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the room_name where there is only one record where the input is a substring of the room name.
+    */
+    public string GetRoomNameFromSubstringName(string roomName) {
+        var (roomFields, roomValues) = ExecuteSelect("select room_name from tblRoom where room_name like \"%" + roomName + "%\"");
+        return Convert.ToString(roomValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return true if the node id matches a record
+    */
+    public bool NodeIDExists(string nodeID) {
+        return Convert.ToInt32(ExecuteScalarSelect("select count(node_id) from tblNode where node_id = " + nodeID)) == 1;
+    }
+
+    /**
+    This function uses SQL to return true if a node record exists for the node name.
+    */
+    public bool NodeNameExists(string nodeName) {
+        return Convert.ToInt32(ExecuteScalarSelect("select count(node_id) from tblNode where node_name = \"" + nodeName + "\"")) == 1;
+    }
+
+    /**
+    This function uses SQL to return the exact node id for the input node name/
+    */
+    public int GetNodeIDFromName(string nodeName) {
+        var (nodeFields, nodeValues) = ExecuteSelect("select node_id from tblNode where node_name = \"" + nodeName + "\"");
+        return Convert.ToInt32(nodeValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the number of records where the input is a substring of node name.
+    */
+    public int GetNodeNameSubstringCount(string nodeName) {
+        return Convert.ToInt32(ExecuteScalarSelect("select count(node_id) from tblNode where node_name like \"%" + nodeName + "%\""));
+    }
+
+    /**
+    This function uses SQL to return the exact node_id where there is only one record where the input is a substring of the node name.
+    */
+    public int GetNodeIDFromSubstringName(string nodeName) {
+        var (nodeFields, nodeValues) = ExecuteSelect("select node_id from tblNode where node_name like \"%" + nodeName + "%\"");
+        return Convert.ToInt32(nodeValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the node_name where there is only one record where the input is a substring of the node name.
+    */
+    public string GetNodeNameFromSubstringName(string nodeName) {
+        var (nodeFields, nodeValues) = ExecuteSelect("select node_name from tblNode where node_name like \"%" + nodeName + "%\"");
+        return Convert.ToString(nodeValues[0][0]);
+    }
+
     
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using TMPro;
 
 public class DijkstraPathfinderScript : MonoBehaviour
 {
@@ -12,6 +13,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private PathRendererScript pathRenderer;
     [SerializeField] private UserSettingsScript userSettings;
+
+    [Header ("UI Elements")]
+    [SerializeField] private TMP_InputField startLocationInput;
+    [SerializeField] private TMP_InputField targetLocationInput;
+    [SerializeField] private TMP_Text errorMessage;
 
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
     
@@ -51,6 +57,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     public Stopwatch stopwatch = new Stopwatch();
     public bool startDijkstra = false;
+
+    public string userStartLocation = "";
+    public string userTargetLocation = "";
 
     // constructor
     void Start(){
@@ -1363,5 +1372,133 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public void HidePathfindingResults() {
         showResults = false;
+    }
+
+    /**
+    This procedure validates the start location's input and adjusts it as necessary.
+    */
+    public void ValidateStartLocation() {
+        // check if it is a room id that exactly matches a database entry.
+        if (databaseHelper.RoomIDExists(startLocationInput.text)) {
+            // startLocationInput exists as room id so capitalise and set to both user and program start location
+            startLocation = startLocationInput.text.ToUpper();
+            userStartLocation = startLocationInput.text.ToUpper();
+            startLocationInput.text = userStartLocation;
+        }
+        // check if it is a room name that exactly matches
+        else if (databaseHelper.RoomNameExists(startLocationInput.text)) {
+            // startLocationInput exists as room_name so get room id and set user and program start location
+            startLocation = databaseHelper.GetRoomIDFromName(startLocationInput.text);
+            userStartLocation = startLocationInput.text.ToUpper();
+            startLocationInput.text = userStartLocation;
+        }
+        // check if it appears in part of a room name but only in one, not multiple
+        else if (databaseHelper.GetRoomNameSubstringCount(startLocationInput.text) == 1) {
+            // startLocationInput exists as a substring of a single room_name so get room id and set user and program start location
+            startLocation = databaseHelper.GetRoomIDFromSubstringName(startLocationInput.text);
+            userStartLocation = databaseHelper.GetRoomNameFromSubstringName(startLocationInput.text);
+            startLocationInput.text = userStartLocation;
+        }
+        // check if it is a node name that exactly matches
+        else if (databaseHelper.NodeNameExists(startLocationInput.text)) {
+            // startLocationInput exists as node name so get node id and set user and program start location
+            startLocation = Convert.ToString(databaseHelper.GetNodeIDFromName(startLocationInput.text));
+            userStartLocation = startLocationInput.text.ToUpper();
+            startLocationInput.text = userStartLocation;
+        }
+        // check if it appears in part of a node name but only in one, not multiple
+        else if (databaseHelper.GetNodeNameSubstringCount(startLocationInput.text) == 1) {
+            // startLocationInput exists as a substring of a single node name so get node id and set user and program start location
+            startLocation = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(startLocationInput.text));
+            userStartLocation = databaseHelper.GetNodeNameFromSubstringName(startLocationInput.text);
+            startLocationInput.text = userStartLocation;
+        }
+        // check if it appears as an exact node_id
+        else if (databaseHelper.NodeIDExists(startLocationInput.text)) {
+            // startLocationInput exists as a node id so set startLocation to both user and program start location
+            startLocation = startLocationInput.text;
+            userStartLocation = "Node " + startLocationInput.text;
+            startLocationInput.text = userStartLocation;
+        }
+        // error message if multiple substring records found
+        else if (databaseHelper.GetRoomNameSubstringCount(startLocationInput.text) > 1 || databaseHelper.GetNodeNameSubstringCount(startLocationInput.text) > 1) {
+            // startLocationInput exists as a substring of multiple room_names so set startLocation to ""
+            startLocation = "";
+            errorMessage.text = "Start Location was too vague. Please be more specific.";
+        }
+        // error message if no substring records found
+        else {
+            // startLocationInput does not exist as a substring of any node names so set startLocation to ""
+            startLocation = "";
+            errorMessage.text = "Start Location was not found.";
+        }
+
+        if (startLocation != "") {
+            errorMessage.text = "";
+        }
+    }
+
+    /**
+    This procedure validates the target location's input and adjusts it as necessary.
+    */
+    public void ValidateTargetLocation() {
+        // check if it is a room id that exactly matches a database entry.
+        if (databaseHelper.RoomIDExists(targetLocationInput.text)) {
+            // targetLocationInput exists as room id so capitalise and set to both user and program target location
+            targetLocation = targetLocationInput.text.ToUpper();
+            userTargetLocation = targetLocationInput.text.ToUpper();
+            targetLocationInput.text = userTargetLocation;
+        }
+        // check if it is a room name that exactly matches
+        else if (databaseHelper.RoomNameExists(targetLocationInput.text)) {
+            // targetLocationInput exists as room_name so get room id and set user and program target location
+            targetLocation = databaseHelper.GetRoomIDFromName(targetLocationInput.text);
+            userTargetLocation = targetLocationInput.text.ToUpper();
+            targetLocationInput.text = userTargetLocation;
+        }
+        // check if it appears in part of a room name but only in one, not multiple
+        else if (databaseHelper.GetRoomNameSubstringCount(targetLocationInput.text) == 1) {
+            // targetLocationInput exists as a substring of a single room_name so get room id and set user and program target location
+            targetLocation = databaseHelper.GetRoomIDFromSubstringName(targetLocationInput.text);
+            userTargetLocation = databaseHelper.GetRoomNameFromSubstringName(targetLocationInput.text);
+            targetLocationInput.text = userTargetLocation;
+        }
+        // check if it is a node name that exactly matches
+        else if (databaseHelper.NodeNameExists(targetLocationInput.text)) {
+            // targetLocationInput exists as node name so get node id and set user and program target location
+            targetLocation = Convert.ToString(databaseHelper.GetNodeIDFromName(targetLocationInput.text));
+            userTargetLocation = targetLocationInput.text.ToUpper();
+            targetLocationInput.text = userTargetLocation;
+        }
+        // check if it appears in part of a node name but only in one, not multiple
+        else if (databaseHelper.GetNodeNameSubstringCount(targetLocationInput.text) == 1) {
+            // targetLocationInput exists as a substring of a single node name so get node id and set user and program target location
+            targetLocation = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(targetLocationInput.text));
+            userTargetLocation = databaseHelper.GetNodeNameFromSubstringName(targetLocationInput.text);
+            targetLocationInput.text = userTargetLocation;
+        }
+        // check if it appears as an exact node_id
+        else if (databaseHelper.NodeIDExists(targetLocationInput.text)) {
+            // targetLocationInput exists as a node id so set targetLocation to both user and program target location
+            targetLocation = targetLocationInput.text;
+            userTargetLocation = "Node " + targetLocationInput.text;
+            targetLocationInput.text = userTargetLocation;
+        }
+        // error message if multiple substring records found
+        else if (databaseHelper.GetRoomNameSubstringCount(targetLocationInput.text) > 1 || databaseHelper.GetNodeNameSubstringCount(targetLocationInput.text) > 1) {
+            // targetLocationInput exists as a substring of multiple room_names so set targetLocation to ""
+            targetLocation = "";
+            errorMessage.text = "Target Location was too vague. Please be more specific.";
+        }
+        // error message if no substring records found
+        else {
+            // targetLocationInput does not exist as a substring of any node names so set targetLocation to ""
+            targetLocation = "";
+            errorMessage.text = "Target Location was not found.";
+        }
+
+        if (targetLocation != "") {
+            errorMessage.text = "";
+        }
     }
 }
