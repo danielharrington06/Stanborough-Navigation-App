@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using TMPro;
+using System.Globalization;
 
 public class DijkstraPathfinderScript : MonoBehaviour
 {
@@ -1384,14 +1385,19 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else if (databaseHelper.RoomIDExists(startLocationInput.text)) {
             // startLocationInput exists as room id so capitalise and set to both user and program start location
             startLocation = startLocationInput.text.ToUpper();
-            userStartLocation = startLocationInput.text.ToUpper();
+            if (databaseHelper.GetRoomNameFromID(startLocation) != "") {
+                userStartLocation = databaseHelper.GetRoomNameFromID(startLocation);
+            }
+            else {
+                userStartLocation = startLocationInput.text.ToUpper();
+            }
             startLocationInput.text = userStartLocation;
         }
         // check if it is a room name that exactly matches
         else if (databaseHelper.RoomNameExists(startLocationInput.text)) {
             // startLocationInput exists as room_name so get room id and set user and program start location
             startLocation = databaseHelper.GetRoomIDFromName(startLocationInput.text);
-            userStartLocation = startLocationInput.text.ToUpper();
+            userStartLocation = databaseHelper.GetRoomNameFromName(startLocationInput.text);
             startLocationInput.text = userStartLocation;
         }
         // check if it appears in part of a room name but only in one, not multiple
@@ -1402,17 +1408,22 @@ public class DijkstraPathfinderScript : MonoBehaviour
             startLocationInput.text = userStartLocation;
         }
         // check if it appears as an exact node_id
-        else if (databaseHelper.NodeIDExists(startLocationInput.text)) {
+        else if (databaseHelper.NodeIDExists(startLocationInput.text) ){ // && double.TryParse(startLocationInput.text, out _)) {
             // startLocationInput exists as a node id so set startLocation to both user and program start location
             startLocation = startLocationInput.text;
-            userStartLocation = "Node " + startLocationInput.text;
+            if (databaseHelper.GetNodeNameFromID(startLocation) != "") {
+                userStartLocation = databaseHelper.GetNodeNameFromID(startLocation);
+            }
+            else {
+                userStartLocation = "Node " + startLocationInput.text;
+            }
             startLocationInput.text = userStartLocation;
         }
         // check if it is a node name that exactly matches
         else if (databaseHelper.NodeNameExists(startLocationInput.text)) {
             // startLocationInput exists as node name so get node id and set user and program start location
             startLocation = Convert.ToString(databaseHelper.GetNodeIDFromName(startLocationInput.text));
-            userStartLocation = startLocationInput.text.ToUpper();
+            userStartLocation = databaseHelper.GetNodeNameFromName(startLocationInput.text);
             startLocationInput.text = userStartLocation;
         }
         // check if it appears in part of a node name but only in one, not multiple
@@ -1452,7 +1463,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else if (databaseHelper.RoomIDExists(targetLocationInput.text)) {
             // targetLocationInput exists as room id so capitalise and set to both user and program target location
             targetLocation = targetLocationInput.text.ToUpper();
-            userTargetLocation = targetLocationInput.text.ToUpper();
+            if (databaseHelper.GetRoomNameFromID(targetLocation) != "") {
+                userTargetLocation = databaseHelper.GetRoomNameFromID(targetLocation);
+            }
+            else {
+                userTargetLocation = targetLocationInput.text.ToUpper();
+            }
             targetLocationInput.text = userTargetLocation;
         }
         // check if it is a room name that exactly matches
@@ -1473,7 +1489,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else if (databaseHelper.NodeIDExists(targetLocationInput.text)) {
             // targetLocationInput exists as a node id so set targetLocation to both user and program target location
             targetLocation = targetLocationInput.text;
-            userTargetLocation = "Node " + targetLocationInput.text;
+            if (databaseHelper.GetNodeNameFromID(targetLocation) != "") {
+                userTargetLocation = databaseHelper.GetNodeNameFromID(targetLocation);
+            }
+            else {
+                userTargetLocation = "Node " + targetLocationInput.text;
+            }
             targetLocationInput.text = userTargetLocation;
         }
         // check if it is a node name that exactly matches

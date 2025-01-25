@@ -946,6 +946,14 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
+    This function uses SQL to return the correctly title cased room name for the input room name.
+    */
+    public string GetRoomNameFromName(string roomName) {
+        var (roomFields, roomValues) = ExecuteSelect("select room_name from tblRoom where room_name = \"" + roomName + "\"");
+        return Convert.ToString(roomValues[0][0]);
+    }
+
+    /**
     This function uses SQL to return the number of records where the input is a substring of room name.
     */
     public int GetRoomNameSubstringCount(string roomName) {
@@ -972,6 +980,9 @@ public class DatabaseHelperScript : MonoBehaviour
     This function uses SQL to return true if the node id matches a record
     */
     public bool NodeIDExists(string nodeID) {
+        if (!int.TryParse(nodeID, out _)) { // contains non intger characters
+            return false;
+        }
         return Convert.ToInt32(ExecuteScalarSelect("select count(node_id) from tblNode where node_id = " + nodeID)) == 1;
     }
 
@@ -988,6 +999,14 @@ public class DatabaseHelperScript : MonoBehaviour
     public int GetNodeIDFromName(string nodeName) {
         var (nodeFields, nodeValues) = ExecuteSelect("select node_id from tblNode where node_name = \"" + nodeName + "\"");
         return Convert.ToInt32(nodeValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the correctly title cased node name for the input node name.
+    */
+    public string GetNodeNameFromName(string nodeName) {
+        var (nodeFields, nodeValues) = ExecuteSelect("select node_name from tblNode where node_name = \"" + nodeName + "\"");
+        return Convert.ToString(nodeValues[0][0]);
     }
 
     /**
@@ -1011,6 +1030,32 @@ public class DatabaseHelperScript : MonoBehaviour
     public string GetNodeNameFromSubstringName(string nodeName) {
         var (nodeFields, nodeValues) = ExecuteSelect("select node_name from tblNode where node_name like \"%" + nodeName + "%\"");
         return Convert.ToString(nodeValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to check if a given room id has a room name and returns it if it does or an empty string if not.
+    */
+    public string GetRoomNameFromID(string roomID) {
+        var (roomFields, roomValues) = ExecuteSelect("select room_name from tblRoom where room_id = \"" + roomID + "\"");
+        if (roomValues.Count == 0) {
+            return "";
+        }
+        else {
+            return Convert.ToString(roomValues[0][0]);
+        }
+    }
+
+    /**
+    This function uses SQL to check if a given node id has a node name and returns it if it does or an empty string if not.
+    */
+    public string GetNodeNameFromID(string nodeID) {
+        var (nodeFields, nodeValues) = ExecuteSelect("select node_name from tblNode where node_id = " + nodeID);
+        if (nodeValues.Count == 0) {
+            return "";
+        }
+        else {
+            return Convert.ToString(nodeValues[0][0]);
+        }
     }
 
     
