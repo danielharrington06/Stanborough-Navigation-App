@@ -1378,8 +1378,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
     This procedure validates the start location's input and adjusts it as necessary.
     */
     public void ValidateStartLocation() {
+        // check if empty and if so set error message to empty
+        if (startLocationInput.text == "") {
+            errorMessage.text = "";
+        }
         // check if it is a room id that exactly matches a database entry.
-        if (databaseHelper.RoomIDExists(startLocationInput.text)) {
+        else if (databaseHelper.RoomIDExists(startLocationInput.text)) {
             // startLocationInput exists as room id so capitalise and set to both user and program start location
             startLocation = startLocationInput.text.ToUpper();
             userStartLocation = startLocationInput.text.ToUpper();
@@ -1399,6 +1403,13 @@ public class DijkstraPathfinderScript : MonoBehaviour
             userStartLocation = databaseHelper.GetRoomNameFromSubstringName(startLocationInput.text);
             startLocationInput.text = userStartLocation;
         }
+        // check if it appears as an exact node_id
+        else if (databaseHelper.NodeIDExists(startLocationInput.text)) {
+            // startLocationInput exists as a node id so set startLocation to both user and program start location
+            startLocation = startLocationInput.text;
+            userStartLocation = "Node " + startLocationInput.text;
+            startLocationInput.text = userStartLocation;
+        }
         // check if it is a node name that exactly matches
         else if (databaseHelper.NodeNameExists(startLocationInput.text)) {
             // startLocationInput exists as node name so get node id and set user and program start location
@@ -1411,13 +1422,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // startLocationInput exists as a substring of a single node name so get node id and set user and program start location
             startLocation = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(startLocationInput.text));
             userStartLocation = databaseHelper.GetNodeNameFromSubstringName(startLocationInput.text);
-            startLocationInput.text = userStartLocation;
-        }
-        // check if it appears as an exact node_id
-        else if (databaseHelper.NodeIDExists(startLocationInput.text)) {
-            // startLocationInput exists as a node id so set startLocation to both user and program start location
-            startLocation = startLocationInput.text;
-            userStartLocation = "Node " + startLocationInput.text;
             startLocationInput.text = userStartLocation;
         }
         // error message if multiple substring records found
@@ -1442,8 +1446,12 @@ public class DijkstraPathfinderScript : MonoBehaviour
     This procedure validates the target location's input and adjusts it as necessary.
     */
     public void ValidateTargetLocation() {
+        // check if empty and if so set error message to empty
+        if (targetLocationInput.text == "") {
+            errorMessage.text = "";
+        }
         // check if it is a room id that exactly matches a database entry.
-        if (databaseHelper.RoomIDExists(targetLocationInput.text)) {
+        else if (databaseHelper.RoomIDExists(targetLocationInput.text)) {
             // targetLocationInput exists as room id so capitalise and set to both user and program target location
             targetLocation = targetLocationInput.text.ToUpper();
             userTargetLocation = targetLocationInput.text.ToUpper();
@@ -1463,6 +1471,13 @@ public class DijkstraPathfinderScript : MonoBehaviour
             userTargetLocation = databaseHelper.GetRoomNameFromSubstringName(targetLocationInput.text);
             targetLocationInput.text = userTargetLocation;
         }
+        // check if it appears as an exact node_id
+        else if (databaseHelper.NodeIDExists(targetLocationInput.text)) {
+            // targetLocationInput exists as a node id so set targetLocation to both user and program target location
+            targetLocation = targetLocationInput.text;
+            userTargetLocation = "Node " + targetLocationInput.text;
+            targetLocationInput.text = userTargetLocation;
+        }
         // check if it is a node name that exactly matches
         else if (databaseHelper.NodeNameExists(targetLocationInput.text)) {
             // targetLocationInput exists as node name so get node id and set user and program target location
@@ -1475,13 +1490,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // targetLocationInput exists as a substring of a single node name so get node id and set user and program target location
             targetLocation = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(targetLocationInput.text));
             userTargetLocation = databaseHelper.GetNodeNameFromSubstringName(targetLocationInput.text);
-            targetLocationInput.text = userTargetLocation;
-        }
-        // check if it appears as an exact node_id
-        else if (databaseHelper.NodeIDExists(targetLocationInput.text)) {
-            // targetLocationInput exists as a node id so set targetLocation to both user and program target location
-            targetLocation = targetLocationInput.text;
-            userTargetLocation = "Node " + targetLocationInput.text;
             targetLocationInput.text = userTargetLocation;
         }
         // error message if multiple substring records found
@@ -1500,5 +1508,21 @@ public class DijkstraPathfinderScript : MonoBehaviour
         if (targetLocation != "") {
             errorMessage.text = "";
         }
+    }
+
+    /**
+    This function swaps the start and target locations.
+    */
+    public void SwapStartAndTargetLocations() {
+        string temp = startLocation;
+        startLocation = targetLocation;
+        targetLocation = temp;
+
+        temp = userStartLocation;
+        userStartLocation = userTargetLocation;
+        userTargetLocation = temp;
+
+        startLocationInput.text = userStartLocation;
+        targetLocationInput.text = userTargetLocation;
     }
 }
