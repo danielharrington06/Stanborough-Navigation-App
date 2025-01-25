@@ -69,19 +69,30 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     }
 
+    // methods
+    
     void Update() {
 
-        if (startDijkstra == true && startLocation != "" && targetLocation != "") {
-            showResults = false;
-            pathRenderer.drawPath = false;
-            CarryOutAndInterpretPathfinding();
-
-            UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
+        if (startDijkstra == true) {
+            if (startLocation != "" && targetLocation != "") {
+                showResults = false;
+                pathRenderer.drawPath = false;
+                CarryOutAndInterpretPathfinding();
+    
+                UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
+            }
+            else if (startLocation == "" && targetLocation == "") {
+                errorMessage.text = "Please enter a start and target location.";
+            }
+            else if (startLocation == "") {
+                errorMessage.text = "Please enter a start location.";
+            }
+            else if (targetLocation == "") {
+                errorMessage.text = "Please enter a target location.";
+            }
+            startDijkstra = false;
         }
-        startDijkstra = false;
-
     }
-    // methods
 
     /**
     This function will reset all the variables so can be used in Start and before pathfinding.
@@ -1437,13 +1448,13 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else if (databaseHelper.GetRoomNameSubstringCount(startLocationInput.text) > 1 || databaseHelper.GetNodeNameSubstringCount(startLocationInput.text) > 1) {
             // startLocationInput exists as a substring of multiple room_names so set startLocation to ""
             startLocation = "";
-            errorMessage.text = "Start Location was too vague. Please be more specific.";
+            errorMessage.text = "Start location was too vague. Please be more specific.";
         }
         // error message if no substring records found
         else {
             // startLocationInput does not exist as a substring of any node names so set startLocation to ""
             startLocation = "";
-            errorMessage.text = "Start Location was not found.";
+            errorMessage.text = "Start location was not found.";
         }
 
         if (startLocation != "") {
@@ -1515,13 +1526,13 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else if (databaseHelper.GetRoomNameSubstringCount(targetLocationInput.text) > 1 || databaseHelper.GetNodeNameSubstringCount(targetLocationInput.text) > 1) {
             // targetLocationInput exists as a substring of multiple room_names so set targetLocation to ""
             targetLocation = "";
-            errorMessage.text = "Target Location was too vague. Please be more specific.";
+            errorMessage.text = "Target location was too vague. Please be more specific.";
         }
         // error message if no substring records found
         else {
             // targetLocationInput does not exist as a substring of any node names so set targetLocation to ""
             targetLocation = "";
-            errorMessage.text = "Target Location was not found.";
+            errorMessage.text = "Target location was not found.";
         }
 
         if (targetLocation != "") {
