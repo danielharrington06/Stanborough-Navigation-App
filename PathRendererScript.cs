@@ -54,6 +54,7 @@ public class PathRendererScript : MonoBehaviour
             if (drawPath == true) {
                 // draw path
                 DrawPath();
+                DestroyLocationSymbols();
                 InstantiateStartLocationSymbol();
                 InstantiateTargetLocationSymbol();
             }
