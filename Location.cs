@@ -11,7 +11,11 @@ public class Location // inherits was easiest as this is not attached to a gameo
     public Vector2 coordinates; // world spacee coordinates
     public string userText; // user input text
 
-    public Location() {
+    private DatabaseHelperScript databaseHelper;
+
+    // pass an instance of databasehelper to this class as this was easiest fix
+    public Location(DatabaseHelperScript helper) { 
+        databaseHelper = helper;
         ResetFields();
     }
 
@@ -25,14 +29,13 @@ public class Location // inherits was easiest as this is not attached to a gameo
     }
 
     public void SetupLocation() {
-    if (id != "") {
-        DatabaseHelperScript dbHelper = new DatabaseHelperScript();
-        type = dbHelper.GetLocationType(id);
-        floor = dbHelper.GetLocationFloor(id, type);
-        coordinates = dbHelper.GetLocationCoordinates(id, type);
+        if (id != "") {
+            type = databaseHelper.GetLocationType(id);
+            floor = databaseHelper.GetLocationFloor(id, type);
+            coordinates = databaseHelper.GetLocationCoordinates(id, type);
+        }
+        else {
+            ResetFields();
+        }
     }
-    else {
-        ResetFields();
-    }
-}
 }

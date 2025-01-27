@@ -64,8 +64,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     // constructor
     void Start(){
-        startLocation = new Location();
-        targetLocation = new Location();
+        startLocation = new Location(databaseHelper);
+        targetLocation = new Location(databaseHelper);
 
         ResetFields();
 
@@ -1579,17 +1579,35 @@ public class DijkstraPathfinderScript : MonoBehaviour
     This function swaps the start and target locations.
     */
     public void SwapStartAndTargetLocations() {
-        string temp = startLocation.id;
+        // temporary storage for swapping
+        string tempId = startLocation.id;
+        int tempNode = startLocation.node;
+        string tempType = startLocation.type;
+        bool tempFloor = startLocation.floor;
+        Vector2 tempCoordinates = startLocation.coordinates;
+        string tempUserText = startLocation.userText;
+
+        // swap with the other location
         startLocation.id = targetLocation.id;
-        targetLocation.id = temp;
-
-        temp = startLocation.userText;
+        startLocation.node = targetLocation.node;
+        startLocation.type = targetLocation.type;
+        startLocation.floor = targetLocation.floor;
+        startLocation.coordinates = targetLocation.coordinates;
         startLocation.userText = targetLocation.userText;
-        targetLocation.userText = temp;
 
+        // set the other location's fields to this instance's original values
+        targetLocation.id = tempId;
+        targetLocation.node = tempNode;
+        targetLocation.type = tempType;
+        targetLocation.floor = tempFloor;
+        targetLocation.coordinates = tempCoordinates;
+        targetLocation.userText = tempUserText;
+        
+        // update shown text
         startLocationInput.text = startLocation.userText;
         targetLocationInput.text = targetLocation.userText;
-        
+
+        // and stop displaying results
         showResults = false;
     }
 
