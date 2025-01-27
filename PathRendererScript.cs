@@ -26,8 +26,10 @@ public class PathRendererScript : MonoBehaviour
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
-        ColorUtility.TryParseHtmlString("#5FD2FF", out targetColour); // blue for now
+        // assign colours like this as c# does not recognise hex colours
+        ColorUtility.TryParseHtmlString("#5FD2FF", out startColour); // blue for now
         ColorUtility.TryParseHtmlString("#FE5F64", out targetColour); // red for now
+        createdLocationSymbols = new List<GameObject>();
         floor = false;
         drawPath = false;
     }
@@ -42,6 +44,7 @@ public class PathRendererScript : MonoBehaviour
             if (!userSettings.mapFocussed) { // if unfocussed, drawPath should be false
                 drawPath = userSettings.mapFocussed;
                 mesh.Clear();
+                DestroyLocationSymbols();
             }
             else{} // otherwise, drawPath can keep its value
         }
@@ -51,10 +54,13 @@ public class PathRendererScript : MonoBehaviour
             if (drawPath == true) {
                 // draw path
                 DrawPath();
+                InstantiateStartLocationSymbol();
+                InstantiateTargetLocationSymbol();
             }
             else {
                 // clear path
                 mesh.Clear();
+                DestroyLocationSymbols();
             }
         }
     }
@@ -187,19 +193,34 @@ public class PathRendererScript : MonoBehaviour
         if (dijkstraPathfinder.startLocation != null && dijkstraPathfinder.startLocation.floor == userSettings.floor) {
             // instantiate the location prefab
             GameObject locationObject = Instantiate(locationPrefab, transform);
-
             // make child of world space canvas
             locationObject.transform.SetParent(worldSpaceCanvas.transform, false);
-            
             // adjust position
             locationObject.transform.position = new Vector3(Convert.ToSingle(dijkstraPathfinder.startLocation.coordinates.x), Convert.ToSingle(dijkstraPathfinder.startLocation.coordinates.y), transform.position.z);
-
             // change game object name
             locationObject.name = "StartLocationSymbol";
-
             // change colour to set colour
             locationObject.GetComponent<Image>().color = startColour;
+            // add to the list of created location symbols
+            createdLocationSymbols.Add(locationObject);
+        }
+    }
 
+    /**
+    This procedure generates a new target location symbol and instantiates it if the floors match
+    */
+    public void InstantiateTargetLocationSymbol() {
+        if (dijkstraPathfinder.targetLocation != null && dijkstraPathfinder.targetLocation.floor == userSettings.floor) {
+            // instantiate the location prefab
+            GameObject locationObject = Instantiate(locationPrefab, transform);
+            // make child of world space canvas
+            locationObject.transform.SetParent(worldSpaceCanvas.transform, false);
+            // adjust position
+            locationObject.transform.position = new Vector3(Convert.ToSingle(dijkstraPathfinder.targetLocation.coordinates.x), Convert.ToSingle(dijkstraPathfinder.targetLocation.coordinates.y), transform.position.z);
+            // change game object name
+            locationObject.name = "TargetLocationSymbol";
+            // change colour to set colour
+            locationObject.GetComponent<Image>().color = targetColour;
             // add to the list of created location symbols
             createdLocationSymbols.Add(locationObject);
         }
