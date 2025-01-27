@@ -1489,6 +1489,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
 
         startLocation.SetupLocation();
+        showResults = false;
     }
 
     /**
@@ -1517,7 +1518,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else if (databaseHelper.RoomNameExists(targetLocationInput.text)) {
             // targetLocationInput exists as room_name so get room id and set user and program target location
             targetLocation.id = databaseHelper.GetRoomIDFromName(targetLocationInput.text);
-            targetLocation.userText = targetLocationInput.text.ToUpper();
+            targetLocation.userText = targetLocationInput.text;
             targetLocationInput.text = targetLocation.userText;
         }
         // check if it appears in part of a room name but only in one, not multiple
@@ -1543,7 +1544,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         else if (databaseHelper.NodeNameExists(targetLocationInput.text)) {
             // targetLocationInput exists as node name so get node id and set user and program target location
             targetLocation.id = Convert.ToString(databaseHelper.GetNodeIDFromName(targetLocationInput.text));
-            targetLocation.userText = targetLocationInput.text.ToUpper();
+            targetLocation.userText = targetLocationInput.text;
             targetLocationInput.text = targetLocation.userText;
         }
         // check if it appears in part of a node name but only in one, not multiple
@@ -1573,6 +1574,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
 
         targetLocation.SetupLocation();
+        showResults = false;
     }
 
     /**
