@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Location : MonoBehaviour
+public class Location : DatabaseHelperScript // inherits was easiest as this is not attached to a gameobject
 {
     public string id; // text eg "G4" or "18" or "MH"
     public int node; // starting node
@@ -10,7 +10,6 @@ public class Location : MonoBehaviour
     public bool floor; // false means 0, true means 1
     public Vector2 coordinates; // world spacee coordinates
     public string userText; // user input text
-    private DatabaseHelperScript databaseHelper = new DatabaseHelperScript();
 
     public Location() {
         ResetFields();
@@ -27,9 +26,9 @@ public class Location : MonoBehaviour
 
     public void SetupLocation() {
         if (id != "") {
-            type = databaseHelper.GetLocationType(id);
-            floor = databaseHelper.GetLocationFloor(id, type);
-            coordinates = databaseHelper.GetLocationCoordinates(id, type);
+            type = GetLocationType(id);
+            floor = GetLocationFloor(id, type);
+            coordinates = GetLocationCoordinates(id, type);
         }
         else {
             ResetFields();

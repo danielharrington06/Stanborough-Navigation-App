@@ -22,7 +22,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
     
-    [Header ("Pathfinding Variables")]
+    
     int numberOfNodes;
 
     private int[] nodesForMatrix;
@@ -30,8 +30,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
     private double[,] distanceMatrix;
     private char[,] infoMatrix;
 
-    public Location startLocation;
-    public Location targetLocation;
+    public Location startLocation {get; private set;}
+    public Location targetLocation {get; private set;}
 
     /* public string startLocationText;
     public string targetLocationText; */
@@ -44,30 +44,23 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
     /* private string startType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
     private string targetType; */ // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
-
+    [Header ("Pathfinding Variables")]
     public double[] dijkstraDistances;
-
     public double estimatedTimeInSecs;
     public TimeSpan estimatedTime;
     public TimeSpan estimatedTimeOfArrival;
+    public double estimatedDistance;
+    public bool showResults;
+    public bool startDijkstra = false;
+    private Stopwatch stopwatch = new Stopwatch();
 
     private List<int> dijkstraPath; // path of node id's
 
-    public List<double[]> floor0Path; // path of coordinates
-    public List<double[]> floor1Path; // path of coordinates
+    public List<double[]> floor0Path {get; private set;} // path of coordinates
+    public List<double[]> floor1Path {get; private set;} // path of coordinates
 
     public List<int> floor0BreakIndex {get; private set;} // path of coordinates
     public List<int> floor1BreakIndex {get; private set;} // path of coordinates
-
-    public double estimatedDistance;
-
-    public bool showResults;
-
-    public Stopwatch stopwatch = new Stopwatch();
-    public bool startDijkstra = false;
-
-    /* private string userStartLocation = "";
-    private string userTargetLocation = ""; */
 
     // constructor
     void Start(){
@@ -1451,7 +1444,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
             startLocationInput.text = startLocation.userText;
         }
         // check if it appears as an exact node_id
-        else if (databaseHelper.NodeIDExists(startLocationInput.text) ){ // && double.TryParse(startLocationInput.text, out _)) {
+        else if (databaseHelper.NodeIDExists(startLocationInput.text) ) {// && double.TryParse(startLocationInput.text, out _)) {
             // startLocationInput exists as a node id so set startLocation.id to both user and program start location
             startLocation.id = startLocationInput.text;
             if (databaseHelper.GetNodeNameFromID(startLocation.id) != "") {
