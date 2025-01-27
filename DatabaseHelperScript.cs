@@ -545,8 +545,6 @@ public class DatabaseHelperScript : MonoBehaviour
                 yIntercept = roomY;
             }
             else {
-                //Debug.Log(roomEdgeValues[i][0] + " " + roomEdgeValues[i][2]);
-                //Debug.Log("Error: room connector is vertical but edge is not");
                 xIntercept = double.NaN;
                 yIntercept = double.NaN;
             }
@@ -631,7 +629,6 @@ public class DatabaseHelperScript : MonoBehaviour
 
         // query db
         var (roomFields, roomValues) = ExecuteSelect("select room_id, room_name, edge_id, node_id, x_coordinate, y_coordinate, door_angle, faculty_id, room_type from tblRoom where room_id = \"" + room_id + "\"");
-
         // now format for return
         string[] roomInfo = new string[9];
         roomInfo[0] = "" + Convert.ToString(roomValues[0][0]);
@@ -817,7 +814,7 @@ public class DatabaseHelperScript : MonoBehaviour
     public bool GetLocationFloor(string id, string type) {
         // check if room
         if (type.Substring(0, 1) == "R") {
-            int floorInt = Convert.ToInt32(GetRoomRecord(id)[3]);
+            int floorInt = GetRoomFloor(id);
             if (floorInt == 0) {
                 return false;
             }
@@ -827,7 +824,7 @@ public class DatabaseHelperScript : MonoBehaviour
         }
         // check if node
         else if (type.Substring(0, 1) == "N") {
-            int floorInt = Convert.ToInt32(GetNodeRecord(Convert.ToInt32((id)[3])));
+            int floorInt = GetNodeFloor(Convert.ToInt32(id));
             if (floorInt == 0) {
                 return false;
             }
@@ -848,8 +845,16 @@ public class DatabaseHelperScript : MonoBehaviour
     public Vector2 GetLocationCoordinates(string id, string type) {
         // check if room
         if (type.Substring(0, 1) == "R") {
-            string[] roomRecord = GetRoomRecord(id);
-            return new Vector2(Convert.ToSingle(roomRecord[1]), Convert.ToSingle(roomRecord[2]));
+            if (type == "RN ") { // room that is node so get the node coordinates
+                string[] roomRecord = GetRoomRecord(id);
+                string nodeID = roomRecord[3];
+                string[] nodeRecord = GetNodeRecord(Convert.ToInt32(nodeID));
+                return new Vector2(Convert.ToSingle(nodeRecord[1]), Convert.ToSingle(nodeRecord[2]));
+            }
+            else { // room that is not a node so has its own defined coordinates
+                string[] roomRecord = GetRoomRecord(id);
+                return new Vector2(Convert.ToSingle(roomRecord[4]), Convert.ToSingle(roomRecord[5]));
+            }
         }
         // check if node
         else if (type.Substring(0, 1) == "N") {

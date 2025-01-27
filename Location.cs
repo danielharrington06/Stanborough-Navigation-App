@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Location : DatabaseHelperScript // inherits was easiest as this is not attached to a gameobject
+public class Location // inherits was easiest as this is not attached to a gameobject
 {
     public string id; // text eg "G4" or "18" or "MH"
     public int node; // starting node
@@ -25,14 +25,14 @@ public class Location : DatabaseHelperScript // inherits was easiest as this is 
     }
 
     public void SetupLocation() {
-        if (id != "") {
-            type = GetLocationType(id);
-            floor = GetLocationFloor(id, type);
-            coordinates = GetLocationCoordinates(id, type);
-        }
-        else {
-            ResetFields();
-        }
-        
+    if (id != "") {
+        DatabaseHelperScript dbHelper = new DatabaseHelperScript();
+        type = dbHelper.GetLocationType(id);
+        floor = dbHelper.GetLocationFloor(id, type);
+        coordinates = dbHelper.GetLocationCoordinates(id, type);
     }
+    else {
+        ResetFields();
+    }
+}
 }
