@@ -1,23 +1,33 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PathRendererScript : MonoBehaviour
 {
     Mesh mesh;
     [SerializeField] private DijkstraPathfinderScript dijkstraPathfinder;
     [SerializeField] private UserSettingsScript userSettings;
-    public Vector3[] linePoints;
-    public int[] lineTriangles;
+    [SerializeField] private GameObject worldSpaceCanvas;
+    [SerializeField] private GameObject locationPrefab;
+    private List<GameObject> createdLocationSymbols;
+
+    private Vector3[] linePoints;
+    private int[] lineTriangles;
     private bool floor;
     public bool drawPath;
 
     // line properties
     public float lineWidth = 0.05f; // line width
     public Color lineColour = Color.yellow;
+    public Color startColour;
+    public Color targetColour;//#FF5F5F;
 
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
+        ColorUtility.TryParseHtmlString("#5FD2FF", out targetColour); // blue for now
+        ColorUtility.TryParseHtmlString("#FE5F64", out targetColour); // red for now
         floor = false;
         drawPath = false;
     }
@@ -159,5 +169,39 @@ public class PathRendererScript : MonoBehaviour
         }
 
         return triangles.ToArray();
+    }
+
+    /**
+    This procedure destoys all current location symbols.
+    */
+    private void DestroyLocationSymbols() {
+        for (int i = 0; i < createdLocationSymbols.Count; i++) {
+            Destroy(createdLocationSymbols[i]);
+        }
+    }
+
+    /**
+    This procedure generates a new start location symbol and instantiates it if the floors match
+    */
+    public void InstantiateStartLocationSymbol() {
+        if (dijkstraPathfinder.startLocation != null && dijkstraPathfinder.startLocation.floor == userSettings.floor) {
+            // instantiate the location prefab
+            GameObject locationObject = Instantiate(locationPrefab, transform);
+
+            // make child of world space canvas
+            locationObject.transform.SetParent(worldSpaceCanvas.transform, false);
+            
+            // adjust position
+            locationObject.transform.position = new Vector3(Convert.ToSingle(dijkstraPathfinder.startLocation.coordinates.x), Convert.ToSingle(dijkstraPathfinder.startLocation.coordinates.y), transform.position.z);
+
+            // change game object name
+            locationObject.name = "StartLocationSymbol";
+
+            // change colour to set colour
+            locationObject.GetComponent<Image>().color = startColour;
+
+            // add to the list of created location symbols
+            createdLocationSymbols.Add(locationObject);
+        }
     }
 }

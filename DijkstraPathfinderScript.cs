@@ -30,14 +30,20 @@ public class DijkstraPathfinderScript : MonoBehaviour
     private double[,] distanceMatrix;
     private char[,] infoMatrix;
 
-    public int startNode; // node id from nodesForMatrix
-    public int targetNode; // node id from nodesForMatrix
+    public Location startLocation;
+    public Location targetLocation;
 
-    public string startLocation; // node or room
-    public string targetLocation; // node or room
+    /* public string startLocationText;
+    public string targetLocationText; */
 
-    private string startType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
-    private string targetType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
+    /* public int startNode; // node id from nodesForMatrix
+    public int targetNode; */ // node id from nodesForMatrix
+
+    /* public string startLocation; // node or room
+    public string targetLocationText; */ // node or room
+
+    /* private string startType; // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
+    private string targetType; */ // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
 
     public double[] dijkstraDistances;
 
@@ -60,11 +66,13 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public Stopwatch stopwatch = new Stopwatch();
     public bool startDijkstra = false;
 
-    private string userStartLocation = "";
-    private string userTargetLocation = "";
+    /* private string userStartLocation = "";
+    private string userTargetLocation = ""; */
 
     // constructor
     void Start(){
+        startLocation = new Location();
+        targetLocation = new Location();
 
         ResetFields();
 
@@ -75,40 +83,40 @@ public class DijkstraPathfinderScript : MonoBehaviour
     void Update() {
         if (startDijkstra == true) {
             showResults = false;
-            if (startLocation != "" && targetLocation != "") {
+            if (startLocation.id != "" && targetLocation.id != "") {
                 CarryOutAndInterpretPathfinding();
                 UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
             }
-            else if (startLocation == "" && userStartLocation == "" && targetLocation == "" && userTargetLocation == "") {
+            else if (startLocation.id == "" && startLocation.userText == "" && targetLocation.id == "" && targetLocation.userText == "") {
                 // both empty
                 errorMessage.text = "Please enter a start and target location.";
             }
-            else if (startLocation == "" && userStartLocation != "" && targetLocation == "" && userTargetLocation == "") {
+            else if (startLocation.id == "" && startLocation.userText != "" && targetLocation.id == "" && targetLocation.userText == "") {
                 // start invalid and target empty
                 errorMessage.text = "Please enter a valid start location and a target location.";
             }
-            else if (startLocation == "" && userStartLocation == "" && targetLocation == "" && userTargetLocation != "") {
+            else if (startLocation.id == "" && startLocation.userText == "" && targetLocation.id == "" && targetLocation.userText != "") {
                 // start valid and target invalid
                 errorMessage.text = "Please enter a start location and a valid target location.";
             }
-            else if (startLocation == "" && userStartLocation != "" && targetLocation == "" && userTargetLocation != "") {
+            else if (startLocation.id == "" && startLocation.userText != "" && targetLocation.id == "" && targetLocation.userText != "") {
                 // start and target invalid
                 errorMessage.text = "Please enter valid start and target locations.";
             }
             // by now all possibilitise have been covered for both not good
-            else if (startLocation == "" && userStartLocation == "") {
+            else if (startLocation.id == "" && startLocation.userText == "") {
                 // start empty
                 errorMessage.text = "Please enter a start location.";
             }
-            else if (startLocation == "" && userStartLocation != "") {
+            else if (startLocation.id == "" && startLocation.userText != "") {
                 // start invalid
                 errorMessage.text = "Please enter a valid start location.";
             }
-            else if (targetLocation == "" && userTargetLocation == "") {
+            else if (targetLocation.id == "" && targetLocation.userText == "") {
                 // target empty
                 errorMessage.text = "Please enter a target location.";
             }
-            else if (targetLocation == "" && userTargetLocation != "") {
+            else if (targetLocation.id == "" && targetLocation.userText != "") {
                 // target invalid
                 errorMessage.text = "Please enter a valid target location.";
             }
@@ -145,10 +153,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
             distanceMatrix = matrixBuilder.distanceMatrixDefault;
             infoMatrix = matrixBuilder.infoMatrixDefault;
         }
-        
-
-        startNode = 0; // get from user interface stuff
-        targetNode = 0; // get from user interface stuff
 
         dijkstraDistances = new double[numberOfNodes];
         estimatedTime = new TimeSpan(0, 0, 0);
@@ -161,9 +165,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         floor0BreakIndex = new List<int>();
         floor1BreakIndex = new List<int>();
-
-        startType = "";
-        targetType = "";
 
         estimatedDistance = 0;
 
@@ -473,26 +474,26 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public List<List<int>> EvaluatePossibleNodes() {
 
-        // first deal with the startLocation
+        // first deal with the startLocation.id
 
         // start list of possible nodes
         List<int> startLocationPossNodes = new List<int>();
 
         // if node, just do the int of the node
-        if (startType == "N  ") {
-            startLocationPossNodes.Add(Convert.ToInt32(startLocation));
+        if (startLocation.type == "N  ") {
+            startLocationPossNodes.Add(Convert.ToInt32(startLocation.id));
         }
         else {
             // query the db for room_id, edge_id, node_id from startRoom record
-            string[] startRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+            string[] startRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
             
             // figure out if connected to node or edge
-            if (startType.Substring(0, 2) == "RN") {
+            if (startLocation.type.Substring(0, 2) == "RN") {
                 // connected to node or is a node
                 startLocationPossNodes.Add(Convert.ToInt32(startRoomRecord[3]));
                 // this is the only possible node
             }
-            else if (startType.Substring(0, 2) == "RE") {
+            else if (startLocation.type.Substring(0, 2) == "RE") {
                 // connected to edge
                 // query db for edge info to figure out if it is directional and the nodes
                 string[] startEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(startRoomRecord[2]));
@@ -510,26 +511,26 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
             
 
-        // first deal with the targetLocation
+        // first deal with the targetLocation.id
 
         // target list of possible nodes
         List<int> targetLocationPossNodes = new List<int>();
 
         // if node, just do the int of the node
-        if (targetType == "N  ") {
-            targetLocationPossNodes.Add(Convert.ToInt32(targetLocation));
+        if (targetLocation.type == "N  ") {
+            targetLocationPossNodes.Add(Convert.ToInt32(targetLocation.id));
         }
         else {
             // query the db for room_id, edge_id, node_id from targetRoom record
-            string[] targetRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+            string[] targetRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
             
             // figure out if connected to node or edge
-            if (targetType.Substring(0, 2) == "RN") {
+            if (targetLocation.type.Substring(0, 2) == "RN") {
                 // connected to node or is a node
                 targetLocationPossNodes.Add(Convert.ToInt32(targetRoomRecord[3]));
                 // this is the only possible node
             }
-            else if (targetType.Substring(0, 2) == "RE") {
+            else if (targetLocation.type.Substring(0, 2) == "RE") {
                 // connected to edge
                 // query db for edge info to figure out if it is directional and the nodes
                 string[] targetEdgeInfo = databaseHelper.GetEdgeRecord(Convert.ToInt32(targetRoomRecord[2]));
@@ -575,8 +576,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
         int targetRoomNumNodes = possibleNodes[1].Count;
 
         // variables that will be returned
-        startNode = -1;
-        targetNode = -1;
+        int startNode = -1;
+        int targetNode = -1;
 
         if (startRoomNumNodes == 1 && targetRoomNumNodes == 1) {
             // if just one possible node for startRoom and targetRoom, choose them
@@ -704,7 +705,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // problem is likely with EvaluatePossibleNodes function
             Console.WriteLine("Invalid number of possible nodes returned.");
             Console.WriteLine($"{startRoomNumNodes} nodes for startRoom and {targetRoomNumNodes} nodes for targetRoom.");
+            errorMessage.text = "An error occurred when determining the start and target nodes.";
         }
+        // set the start and target nodes
+        startLocation.node = startNode;
+        targetLocation.node = targetNode;
     }
 
     /**
@@ -782,13 +787,13 @@ public class DijkstraPathfinderScript : MonoBehaviour
         bool needToUseBoundaryNodes = false;
 
         // no one should be directed outside of gates even if teacher
-        if (startType == "N  ") {
-            needToUseBoundaryNodes = needToUseBoundaryNodes || gateNodes.Contains(Convert.ToInt32(startLocation));
-            needToUseBoundaryNodes = needToUseBoundaryNodes || beyondBoundaryNodes.Contains(Convert.ToInt32(startLocation));
+        if (startLocation.type == "N  ") {
+            needToUseBoundaryNodes = needToUseBoundaryNodes || gateNodes.Contains(Convert.ToInt32(startLocation.id));
+            needToUseBoundaryNodes = needToUseBoundaryNodes || beyondBoundaryNodes.Contains(Convert.ToInt32(startLocation.id));
         }
-        if (targetType == "N  ") {
-            needToUseBoundaryNodes = needToUseBoundaryNodes || gateNodes.Contains(Convert.ToInt32(targetLocation));
-            needToUseBoundaryNodes = needToUseBoundaryNodes || beyondBoundaryNodes.Contains(Convert.ToInt32(targetLocation));
+        if (targetLocation.type == "N  ") {
+            needToUseBoundaryNodes = needToUseBoundaryNodes || gateNodes.Contains(Convert.ToInt32(targetLocation.id));
+            needToUseBoundaryNodes = needToUseBoundaryNodes || beyondBoundaryNodes.Contains(Convert.ToInt32(targetLocation.id));
         }
         
         // purge nodes if needed
@@ -836,36 +841,32 @@ public class DijkstraPathfinderScript : MonoBehaviour
         //matrixBuilder.BuildMatricesForPathfinding;
         ResetFields();
 
-        // set fields startRoom and targetRoom
-        startLocation = startLocation.ToUpper();
-        targetLocation = targetLocation.ToUpper();
-
         // time using stopwatch
         stopwatch.Start();
 
-        // first figure out types for simplicity later
-        // "" if undefined, "N" if node, "RN" if room that is a node, "RNC" if room thats connected to a node, "REU" if undirectional edge, "RED" if directional edge"
-        // problem will be reported if undefined after this
-        startType = databaseHelper.GetLocationType(startLocation);
-        targetType = databaseHelper.GetLocationType(targetLocation);
-
         // dea with "" being returned
-        if (startType == "   ") {
-            UnityEngine.Debug.Log($"Start Location {startLocation} was invalid.");
+        if (startLocation.type == "   " && targetLocation.type == "   ") {
+            errorMessage.text = "Start and target locations were invalid.";
             return;
         }
-        else if (targetType == "   ") {
-            UnityEngine.Debug.Log($"Target Location {targetLocation} was invalid.");
+        else if (startLocation.type == "   ") {  
+            errorMessage.text = $"Start location {startLocation.id} was invalid.";
             return;
         }
+        else if (targetLocation.type == "   ") {
+            errorMessage.text = $"Target location {targetLocation.id} was invalid.";
+            return;
+        }
+        else {} // otherwise fine so pass
+        
 
         // first sort out possibility that start location may be the target location
-        if (startLocation == targetLocation) {
+        if (startLocation.id == targetLocation.id) {
             estimatedTimeInSecs = 0;
             estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
             estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
             estimatedDistance = 0;
-            UnityEngine.Debug.Log($"The start location \"{startLocation}\" was the same as the target location \"{targetLocation}\".");
+            errorMessage.text = $"The start location \"{startLocation.id}\" was the same as the target location \"{targetLocation.id}\".";
             // output a message like above to the screen
             // exit procedure very early
             return;
@@ -874,51 +875,10 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         // figure out which node
         List<List<int>> possibleNodes = EvaluatePossibleNodes();
-        DetermineStartAndTargetNodes(possibleNodes, startLocation, targetLocation);
+        DetermineStartAndTargetNodes(possibleNodes, startLocation.id, targetLocation.id);
 
-        // define variable that represents the method that will be caried out
-        int method = 0; // -1 is undefined, 0 is normal from node to node, 1 is along an edge only
-
-        // only method 1 if room that is connected to edge, on the same edge and...
-        // (edge is not one way or edge is one way and distance to the startroom from the edge startnode is less than to targetroom)
-        // only can check both are rooms (not nodes)
-        if (startType != "N  " && targetType != "N  ") {
-
-            // check if locations are rooms attached to edges
-            if (startType.Substring(0, 2) != "RN" && targetType.Substring(0, 2) != "RN") {
-                
-                // connected to edge, so check if same edge
-                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
-                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
-
-                // check if the same edge
-                if (sRoomRecord[2] == tRoomRecord[2]) {
-                    // same edge so check if edge is one-way
-
-                    if (startType == "RED") {
-                        // one-way so check if target is downstream
-
-                        // get edge record to find top of edge (most upstream part)
-                        string[] edgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(sRoomRecord[2]));
-                        int edgeTopNode = Convert.ToInt32(edgeRecord[1]); // start of one-way edge
-
-                        // find distance from edge start node to each
-                        double distSNode = EstimateNodeRoomDistance(edgeTopNode, startLocation);
-                        double distTNode = EstimateNodeRoomDistance(edgeTopNode, targetLocation);
-
-                        // check if distSNode < distTNode
-                        if (distSNode < distTNode) {
-                            // t node is downstream from s node, so can go along edge
-                            method = 1;
-                        }
-                    }
-                    else {
-                        // same edge and undirected, so go along edge
-                        method = 1;
-                    }
-                }
-            }
-        }
+        // determine if method 0 or 1
+        int method = DetermineMethod();
 
         // now do finding distance/time        
         // normal dijkstra method
@@ -928,17 +888,17 @@ public class DijkstraPathfinderScript : MonoBehaviour
             PurgeEdges();
 
             // carry out dijkstras from start node
-            dijkstraDistances = DijkstrasAlgorithm(timeMatrix, startNode);
+            dijkstraDistances = DijkstrasAlgorithm(timeMatrix, startLocation.node);
             //UnityEngine.Debug.Break();
 
             // now do time, path, distance for nodes stuff only
 
             // find estimated time in secs, but not in time format as have not added possible travel 
             // time from start room to first node and last node to target room
-            estimatedTimeInSecs = EstimateTime(dijkstraDistances, targetNode);
+            estimatedTimeInSecs = EstimateTime(dijkstraDistances, targetLocation.node);
 
             // retrace steps to find dijkstra path
-            dijkstraPath = FindDijkstrasPath(timeMatrix, dijkstraDistances, startNode, targetNode);
+            dijkstraPath = FindDijkstrasPath(timeMatrix, dijkstraDistances, startLocation.node, targetLocation.node);
 
             // find estimated distance for nodes
             estimatedDistance = CalculateDistance(dijkstraPath, distanceMatrix, infoMatrix);
@@ -951,18 +911,18 @@ public class DijkstraPathfinderScript : MonoBehaviour
             double sRoomTime;
             double tRoomTime;
         
-            // figure out start room first  
-            if (startType.Substring(0, 2) == "RN") {
+            // figure out start location first  
+            if (startLocation.type.Substring(0, 2) == "RN") {
                 // room is node or is connected to node so no need to add anything to time or distance
                 sRoomDistance = 0;
                 sRoomTime = 0;
 
             }
-            else if (startType.Substring(0, 2) == "RE") {
+            else if (startLocation.type.Substring(0, 2) == "RE") {
                 // room is connected to edge so add distance from room to startnode
-                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
                 string[] sEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(sRoomRecord[2]));
-                sRoomDistance = EstimateNodeRoomDistance(startNode, startLocation);
+                sRoomDistance = EstimateNodeRoomDistance(startLocation.node, startLocation.id);
                 sRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(sEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
             }
             else{
@@ -971,18 +931,18 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 sRoomTime = 0;
             }
 
-            // figure out start room first  
-            if (targetType.Substring(0, 2) == "RN") {
+            // figure out target location now 
+            if (targetLocation.type.Substring(0, 2) == "RN") {
                 // room is node or is connected to node so no need to add anything to time or distance
                 tRoomDistance = 0;
                 tRoomTime = 0;
 
             }
-            else if (targetType.Substring(0, 2) == "RE") {
+            else if (targetLocation.type.Substring(0, 2) == "RE") {
                 // room is connected to edge so add distance from room to startnode
-                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
                 string[] tEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(tRoomRecord[2]));
-                tRoomDistance = EstimateNodeRoomDistance(targetNode, targetLocation);
+                tRoomDistance = EstimateNodeRoomDistance(targetLocation.node, targetLocation.id);
                 tRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
             }
             else{
@@ -1011,26 +971,25 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // this is so that the distance between R1 and R2 can be found by subtracting both distances from the length of the edge
 
             // get edge record
-            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
-            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
             int edge = Convert.ToInt32(sRoomRecord[2]);
             string[] edgeRecord = databaseHelper.GetEdgeRecord(edge);
 
             // figure out which is closer to the first node in the edge record
-            double distNodeSRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startLocation);
-            double distNodeTRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetLocation);
+            double distNodeSRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startLocation.id);
+            double distNodeTRoom = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetLocation.id);
 
             // now calculate distance from rooms to nodes
             double dist1, dist2;
             if (distNodeSRoom < distNodeTRoom) {
                 // Sroom and node 1, Troom and node2
-                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startLocation);
-                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), targetLocation);
+                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), startLocation.id);
+                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), targetLocation.id);
             }
             else {
                 // Sroom and node2, Troom and node1
-                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), startLocation);
-                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetLocation);
+                dist1 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[2]), startLocation.id);
+                dist2 = EstimateNodeRoomDistance(Convert.ToInt32(edgeRecord[1]), targetLocation.id);
             }
 
             // and then estimated distance
@@ -1052,14 +1011,63 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // should NEVER execute
         else {
             Console.WriteLine("This should never execute. If it does, there is a pathway in the nested if's above that leads to method not being assigned.");
+            errorMessage.text = "An error has occured when setting the method for pathfinding.";
         }
 
         showResults = true;
 
         //end stopwatch
         stopwatch.Stop();
+    }
 
-        // could now show results to screen
+    /**
+    This function determines if method 0 or 1 should be used.
+    */
+    public int DetermineMethod() {
+        // define variable that represents the method that will be caried out
+        int method = 0; // -1 is undefined, 0 is normal from node to node, 1 is along an edge only
+
+        // only method 1 if room that is connected to edge, on the same edge and...
+        // (edge is not one way or edge is one way and distance to the startroom from the edge startnode is less than to targetroom)
+        // only can check both are rooms (not nodes)
+        if (startLocation.type != "N  " && targetLocation.type != "N  ") {
+
+            // check if locations are rooms attached to edges
+            if (startLocation.type.Substring(0, 2) != "RN" && targetLocation.type.Substring(0, 2) != "RN") {
+                
+                // connected to edge, so check if same edge
+                string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
+                string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
+
+                // check if the same edge
+                if (sRoomRecord[2] == tRoomRecord[2]) {
+                    // same edge so check if edge is one-way
+
+                    if (startLocation.type == "RED") {
+                        // one-way so check if target is downstream
+
+                        // get edge record to find top of edge (most upstream part)
+                        string[] edgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(sRoomRecord[2]));
+                        int edgeTopNode = Convert.ToInt32(edgeRecord[1]); // start of one-way edge
+
+                        // find distance from edge start node to each
+                        double distSNode = EstimateNodeRoomDistance(edgeTopNode, startLocation.id);
+                        double distTNode = EstimateNodeRoomDistance(edgeTopNode, targetLocation.id);
+
+                        // check if distSNode < distTNode
+                        if (distSNode < distTNode) {
+                            // t node is downstream from s node, so can go along edge
+                            method = 1;
+                        }
+                    }
+                    else {
+                        // same edge and undirected, so go along edge
+                        method = 1;
+                    }
+                }
+            }
+        }
+        return method;
     }
     
     /**
@@ -1080,51 +1088,51 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         // deal with start location first
 
-        if (startType == "N  ") {
+        if (startLocation.type == "N  ") {
             // is a node
             // so coordinates covered with dijstra path
         }
-        else if (startType == "RN ") {
+        else if (startLocation.type == "RN ") {
             // is a room node
             // so coordinates covered with dijstra path
         }
-        else if (startType == "RNC") {
+        else if (startLocation.type == "RNC") {
             // room is connected to node
             // add coordinates of room
             // get record to get coordinates
-            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
             
             // get start node record to check which floor it is on
-            if (databaseHelper.GetRoomFloor(startLocation) == 0) {
+            if (databaseHelper.GetRoomFloor(startLocation.id) == 0) {
                 // ground floor
                 // add room door
                 floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
             }
-            else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
+            else if (databaseHelper.GetRoomFloor(startLocation.id) == 1) {
                 // first floor
                 // add room door
                 floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
             }
         }
-        else if (startType.Substring(0, 2) == "RE") {
+        else if (startLocation.type.Substring(0, 2) == "RE") {
             // attached to an edge
             // so add room coordinates and intersection coordinates
             // get record to get coordinates
-            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
+            string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
 
             // have to do this to get 
-            if (databaseHelper.GetRoomFloor(startLocation) == 0) {
+            if (databaseHelper.GetRoomFloor(startLocation.id) == 0) {
                 // ground floor
                 // add room door and edge intersection
-                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation.id);
                 var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                 floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
                 floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
             }
-            else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
+            else if (databaseHelper.GetRoomFloor(startLocation.id) == 1) {
                 // first floor
                 // add room door and edge intersection
-                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation.id);
                 var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                 floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(sRoomRecord[4]), 3), Math.Round(Convert.ToDouble(sRoomRecord[5]), 3)}); // room door
                 floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
@@ -1241,51 +1249,51 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
         // finally deal with target location
 
-        if (targetType == "N  ") {
+        if (targetLocation.type == "N  ") {
             // is a node
             // so coordinates covered with dijstra path
         }
-        else if (targetType == "RN ") {
+        else if (targetLocation.type == "RN ") {
             // is a room node
             // so coordinates covered with dijstra path
         }
-        else if (targetType == "RNC") {
+        else if (targetLocation.type == "RNC") {
             // room is connected to node
             // add coordinates of room
             // get record to get coordinates
-            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
             
             // get target node record to check which floor it is on
-            if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
+            if (databaseHelper.GetRoomFloor(targetLocation.id) == 0) {
                 // ground floor
                 // add room door
                 floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
             }
-            else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
+            else if (databaseHelper.GetRoomFloor(targetLocation.id) == 1) {
                 // first floor
                 // add room door
                 floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
             }
         }
-        else if (targetType.Substring(0, 2) == "RE") {
+        else if (targetLocation.type.Substring(0, 2) == "RE") {
             // attached to an edge
             // so add room coordinates and intersection coordinates
             // get record to get coordinates
-            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+            string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
 
             // have to do this to get 
-            if (databaseHelper.GetRoomFloor(targetLocation) == 0) {
+            if (databaseHelper.GetRoomFloor(targetLocation.id) == 0) {
                 // ground floor
                 // add room door and edge intersection
-                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation.id);
                 var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                 floor0Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
                 floor0Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
             }
-            else if (databaseHelper.GetRoomFloor(targetLocation) == 1) {
+            else if (databaseHelper.GetRoomFloor(targetLocation.id) == 1) {
                 // first floor
                 // add room door and edge intersection
-                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+                double[] coordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation.id);
                 var (xIntercept, yIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5], coordinates[6]);
                 floor1Path.Add(new double[2] {Math.Round(xIntercept, 3), Math.Round(yIntercept, 3)}); // intersection
                 floor1Path.Add(new double[2] {Math.Round(Convert.ToDouble(tRoomRecord[4]), 3), Math.Round(Convert.ToDouble(tRoomRecord[5]), 3)}); // room door
@@ -1307,31 +1315,31 @@ public class DijkstraPathfinderScript : MonoBehaviour
         floor1Path = new List<double[]>();
 
         // define room records
-        string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation);
-        string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation);
+        string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
+        string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
 
         // now find floor0Path and floor1Path
         // both are on the same floor
-        if (databaseHelper.GetRoomFloor(startLocation) == 0) {
+        if (databaseHelper.GetRoomFloor(startLocation.id) == 0) {
             // ground floor
             // add s room door, s intersection, t intersection, s room door
             floor0Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
-            double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+            double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation.id);
             var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
             floor0Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
-            double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+            double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation.id);
             var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
             floor0Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
             floor0Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
         }
-        else if (databaseHelper.GetRoomFloor(startLocation) == 1) {
+        else if (databaseHelper.GetRoomFloor(startLocation.id) == 1) {
             // first floor
             // add s room door, s intersection, t intersection, s room door
             floor1Path.Add(new double[2] {Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])}); // s room door
-            double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation);
+            double[] sCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(startLocation.id);
             var (SxIntercept, SyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
             floor1Path.Add(new double[2] {Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)}); // s intersection
-            double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation);
+            double[] tCoordinates = databaseHelper.GetRoomEdgeInfoForIntersection(targetLocation.id);
             var (TxIntercept, TyIntercept) = databaseHelper.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
             floor1Path.Add(new double[2] {Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)}); // t intersection
             floor1Path.Add(new double[2] {Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])}); // t room door
@@ -1345,11 +1353,11 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public void ShowPathfindingResults() {
 
-        Console.WriteLine($"Start Location: {startLocation}");
-        Console.WriteLine($"Target Location: {targetLocation}\n");
+        Console.WriteLine($"Start Location: {startLocation.id}");
+        Console.WriteLine($"Target Location: {targetLocation.id}\n");
 
-        Console.WriteLine($"Start Node: {startNode}");
-        Console.WriteLine($"Target Node: {targetNode}\n");
+        Console.WriteLine($"Start Node: {startLocation.node}");
+        Console.WriteLine($"Target Node: {targetLocation.node}\n");
 
         Console.WriteLine($"Estimated Time: {estimatedTime}");
         Console.WriteLine($"ETA: {estimatedTimeOfArrival}\n");
@@ -1412,80 +1420,82 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public void ValidateStartLocation() {
         // check if empty and if so set error message to empty
         if (startLocationInput.text == "") {
-            startLocation = "";
-            userStartLocation = "";
+            startLocation.id = "";
+            startLocation.userText = "";
             errorMessage.text = "";
         }
         // check if it is a room id that exactly matches a database entry.
         else if (databaseHelper.RoomIDExists(startLocationInput.text)) {
             // startLocationInput exists as room id so capitalise and set to both user and program start location
-            startLocation = startLocationInput.text.ToUpper();
-            if (databaseHelper.GetRoomNameFromID(startLocation) != "") {
-                userStartLocation = databaseHelper.GetRoomNameFromID(startLocation);
+            startLocation.id = startLocationInput.text.ToUpper();
+            if (databaseHelper.GetRoomNameFromID(startLocation.id) != "") {
+                startLocation.userText = databaseHelper.GetRoomNameFromID(startLocation.id);
             }
             else {
-                userStartLocation = startLocationInput.text.ToUpper();
+                startLocation.userText = startLocationInput.text.ToUpper();
             }
-            startLocationInput.text = userStartLocation;
+            startLocationInput.text = startLocation.userText;
         }
         // check if it is a room name that exactly matches
         else if (databaseHelper.RoomNameExists(startLocationInput.text)) {
             // startLocationInput exists as room_name so get room id and set user and program start location
-            startLocation = databaseHelper.GetRoomIDFromName(startLocationInput.text);
-            userStartLocation = databaseHelper.GetRoomNameFromName(startLocationInput.text);
-            startLocationInput.text = userStartLocation;
+            startLocation.id = databaseHelper.GetRoomIDFromName(startLocationInput.text);
+            startLocation.userText = databaseHelper.GetRoomNameFromName(startLocationInput.text);
+            startLocationInput.text = startLocation.userText;
         }
         // check if it appears in part of a room name but only in one, not multiple
         else if (databaseHelper.GetRoomNameSubstringCount(startLocationInput.text) == 1) {
             // startLocationInput exists as a substring of a single room_name so get room id and set user and program start location
-            startLocation = databaseHelper.GetRoomIDFromSubstringName(startLocationInput.text);
-            userStartLocation = databaseHelper.GetRoomNameFromSubstringName(startLocationInput.text);
-            startLocationInput.text = userStartLocation;
+            startLocation.id = databaseHelper.GetRoomIDFromSubstringName(startLocationInput.text);
+            startLocation.userText = databaseHelper.GetRoomNameFromSubstringName(startLocationInput.text);
+            startLocationInput.text = startLocation.userText;
         }
         // check if it appears as an exact node_id
         else if (databaseHelper.NodeIDExists(startLocationInput.text) ){ // && double.TryParse(startLocationInput.text, out _)) {
-            // startLocationInput exists as a node id so set startLocation to both user and program start location
-            startLocation = startLocationInput.text;
-            if (databaseHelper.GetNodeNameFromID(startLocation) != "") {
-                userStartLocation = databaseHelper.GetNodeNameFromID(startLocation);
+            // startLocationInput exists as a node id so set startLocation.id to both user and program start location
+            startLocation.id = startLocationInput.text;
+            if (databaseHelper.GetNodeNameFromID(startLocation.id) != "") {
+                startLocation.userText = databaseHelper.GetNodeNameFromID(startLocation.id);
             }
             else {
-                userStartLocation = "Node " + startLocationInput.text;
+                startLocation.userText = "Node " + startLocationInput.text;
             }
-            startLocationInput.text = userStartLocation;
+            startLocationInput.text = startLocation.userText;
         }
         // check if it is a node name that exactly matches
         else if (databaseHelper.NodeNameExists(startLocationInput.text)) {
             // startLocationInput exists as node name so get node id and set user and program start location
-            startLocation = Convert.ToString(databaseHelper.GetNodeIDFromName(startLocationInput.text));
-            userStartLocation = databaseHelper.GetNodeNameFromName(startLocationInput.text);
-            startLocationInput.text = userStartLocation;
+            startLocation.id = Convert.ToString(databaseHelper.GetNodeIDFromName(startLocationInput.text));
+            startLocation.userText = databaseHelper.GetNodeNameFromName(startLocationInput.text);
+            startLocationInput.text = startLocation.userText;
         }
         // check if it appears in part of a node name but only in one, not multiple
         else if (databaseHelper.GetNodeNameSubstringCount(startLocationInput.text) == 1) {
             // startLocationInput exists as a substring of a single node name so get node id and set user and program start location
-            startLocation = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(startLocationInput.text));
-            userStartLocation = databaseHelper.GetNodeNameFromSubstringName(startLocationInput.text);
-            startLocationInput.text = userStartLocation;
+            startLocation.id = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(startLocationInput.text));
+            startLocation.userText = databaseHelper.GetNodeNameFromSubstringName(startLocationInput.text);
+            startLocationInput.text = startLocation.userText;
         }
         // error message if multiple substring records found
         else if (databaseHelper.GetRoomNameSubstringCount(startLocationInput.text) > 1 || databaseHelper.GetNodeNameSubstringCount(startLocationInput.text) > 1) {
-            // startLocationInput exists as a substring of multiple room_names so set startLocation to ""
-            startLocation = "";
-            userStartLocation = startLocationInput.text;
+            // startLocationInput exists as a substring of multiple room_names so set startLocation.id to ""
+            startLocation.id = "";
+            startLocation.userText = startLocationInput.text;
             errorMessage.text = "Start location was too vague. Please be more specific.";
         }
         // error message if no substring records found
         else {
-            // startLocationInput does not exist as a substring of any node names so set startLocation to ""
-            startLocation = "";
-            userStartLocation = startLocationInput.text;
+            // startLocationInput does not exist as a substring of any node names so set startLocation.id to ""
+            startLocation.id = "";
+            startLocation.userText = startLocationInput.text;
             errorMessage.text = "Start location was not found.";
         }
 
-        if (startLocation != "") {
+        if (startLocation.id != "") {
             errorMessage.text = "";
         }
+
+        startLocation.SetupLocation();
     }
 
     /**
@@ -1494,96 +1504,98 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public void ValidateTargetLocation() {
         // check if empty and if so set error message to empty
         if (targetLocationInput.text == "") {
-            targetLocation = "";
-            userTargetLocation = "";
+            targetLocation.id = "";
+            targetLocation.userText = "";
             errorMessage.text = "";
         }
         // check if it is a room id that exactly matches a database entry.
         else if (databaseHelper.RoomIDExists(targetLocationInput.text)) {
             // targetLocationInput exists as room id so capitalise and set to both user and program target location
-            targetLocation = targetLocationInput.text.ToUpper();
-            if (databaseHelper.GetRoomNameFromID(targetLocation) != "") {
-                userTargetLocation = databaseHelper.GetRoomNameFromID(targetLocation);
+            targetLocation.id = targetLocationInput.text.ToUpper();
+            if (databaseHelper.GetRoomNameFromID(targetLocation.id) != "") {
+                targetLocation.userText = databaseHelper.GetRoomNameFromID(targetLocation.id);
             }
             else {
-                userTargetLocation = targetLocationInput.text.ToUpper();
+                targetLocation.userText = targetLocationInput.text.ToUpper();
             }
-            targetLocationInput.text = userTargetLocation;
+            targetLocationInput.text = targetLocation.userText;
         }
         // check if it is a room name that exactly matches
         else if (databaseHelper.RoomNameExists(targetLocationInput.text)) {
             // targetLocationInput exists as room_name so get room id and set user and program target location
-            targetLocation = databaseHelper.GetRoomIDFromName(targetLocationInput.text);
-            userTargetLocation = targetLocationInput.text.ToUpper();
-            targetLocationInput.text = userTargetLocation;
+            targetLocation.id = databaseHelper.GetRoomIDFromName(targetLocationInput.text);
+            targetLocation.userText = targetLocationInput.text.ToUpper();
+            targetLocationInput.text = targetLocation.userText;
         }
         // check if it appears in part of a room name but only in one, not multiple
         else if (databaseHelper.GetRoomNameSubstringCount(targetLocationInput.text) == 1) {
             // targetLocationInput exists as a substring of a single room_name so get room id and set user and program target location
-            targetLocation = databaseHelper.GetRoomIDFromSubstringName(targetLocationInput.text);
-            userTargetLocation = databaseHelper.GetRoomNameFromSubstringName(targetLocationInput.text);
-            targetLocationInput.text = userTargetLocation;
+            targetLocation.id = databaseHelper.GetRoomIDFromSubstringName(targetLocationInput.text);
+            targetLocation.userText = databaseHelper.GetRoomNameFromSubstringName(targetLocationInput.text);
+            targetLocationInput.text = targetLocation.userText;
         }
         // check if it appears as an exact node_id
         else if (databaseHelper.NodeIDExists(targetLocationInput.text)) {
-            // targetLocationInput exists as a node id so set targetLocation to both user and program target location
-            targetLocation = targetLocationInput.text;
-            if (databaseHelper.GetNodeNameFromID(targetLocation) != "") {
-                userTargetLocation = databaseHelper.GetNodeNameFromID(targetLocation);
+            // targetLocationInput exists as a node id so set targetLocation.id to both user and program target location
+            targetLocation.id = targetLocationInput.text;
+            if (databaseHelper.GetNodeNameFromID(targetLocation.id) != "") {
+                targetLocation.userText = databaseHelper.GetNodeNameFromID(targetLocation.id);
             }
             else {
-                userTargetLocation = "Node " + targetLocationInput.text;
+                targetLocation.userText = "Node " + targetLocationInput.text;
             }
-            targetLocationInput.text = userTargetLocation;
+            targetLocationInput.text = targetLocation.userText;
         }
         // check if it is a node name that exactly matches
         else if (databaseHelper.NodeNameExists(targetLocationInput.text)) {
             // targetLocationInput exists as node name so get node id and set user and program target location
-            targetLocation = Convert.ToString(databaseHelper.GetNodeIDFromName(targetLocationInput.text));
-            userTargetLocation = targetLocationInput.text.ToUpper();
-            targetLocationInput.text = userTargetLocation;
+            targetLocation.id = Convert.ToString(databaseHelper.GetNodeIDFromName(targetLocationInput.text));
+            targetLocation.userText = targetLocationInput.text.ToUpper();
+            targetLocationInput.text = targetLocation.userText;
         }
         // check if it appears in part of a node name but only in one, not multiple
         else if (databaseHelper.GetNodeNameSubstringCount(targetLocationInput.text) == 1) {
             // targetLocationInput exists as a substring of a single node name so get node id and set user and program target location
-            targetLocation = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(targetLocationInput.text));
-            userTargetLocation = databaseHelper.GetNodeNameFromSubstringName(targetLocationInput.text);
-            targetLocationInput.text = userTargetLocation;
+            targetLocation.id = Convert.ToString(databaseHelper.GetNodeIDFromSubstringName(targetLocationInput.text));
+            targetLocation.userText = databaseHelper.GetNodeNameFromSubstringName(targetLocationInput.text);
+            targetLocationInput.text = targetLocation.userText;
         }
         // error message if multiple substring records found
         else if (databaseHelper.GetRoomNameSubstringCount(targetLocationInput.text) > 1 || databaseHelper.GetNodeNameSubstringCount(targetLocationInput.text) > 1) {
-            // targetLocationInput exists as a substring of multiple room_names so set targetLocation to ""
-            targetLocation = "";
-            userTargetLocation = targetLocationInput.text;
+            // targetLocationInput exists as a substring of multiple room_names so set targetLocation.id to ""
+            targetLocation.id = "";
+            targetLocation.userText = targetLocationInput.text;
             errorMessage.text = "Target location was too vague. Please be more specific.";
         }
         // error message if no substring records found
         else {
-            // targetLocationInput does not exist as a substring of any node names so set targetLocation to ""
-            targetLocation = "";
-            userTargetLocation = targetLocationInput.text;
+            // targetLocationInput does not exist as a substring of any node names so set targetLocation.id to ""
+            targetLocation.id = "";
+            targetLocation.userText = targetLocationInput.text;
             errorMessage.text = "Target location was not found.";
         }
 
-        if (targetLocation != "") {
+        if (targetLocation.id != "") {
             errorMessage.text = "";
         }
+
+        targetLocation.SetupLocation();
     }
 
     /**
     This function swaps the start and target locations.
     */
     public void SwapStartAndTargetLocations() {
-        string temp = startLocation;
-        startLocation = targetLocation;
-        targetLocation = temp;
+        string temp = startLocation.id;
+        startLocation.id = targetLocation.id;
+        targetLocation.id = temp;
 
-        temp = userStartLocation;
-        userStartLocation = userTargetLocation;
-        userTargetLocation = temp;
+        temp = startLocation.userText;
+        startLocation.userText = targetLocation.userText;
+        targetLocation.userText = temp;
 
-        startLocationInput.text = userStartLocation;
-        targetLocationInput.text = userTargetLocation;
+        startLocationInput.text = startLocation.userText;
+        targetLocationInput.text = targetLocation.userText;
         
         showResults = false;
     }

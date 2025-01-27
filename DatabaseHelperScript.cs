@@ -381,22 +381,6 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This procedure is only used in testing but uses SQL to save a map edge
-    */
-    public void SaveMapEdge(float point1x, float point1y, float point2x, float point2y) {
-
-        // query db
-        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES ("+Convert.ToString(point1x)+", "+Convert.ToString(point1y)+", " +Convert.ToString(point2x)+", " +Convert.ToString(point2y)+", 1, 0)");
-    }
-
-    /**
-    This procedure is only used in development to enter edges into SQL server
-    */
-    public void SaveMapEdge2(string points) {
-        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES (" + points + ")");
-    }
-
-    /**
     This function uses SQL to get the coordinates of all edges: the simple and hard ones
     */
     public double[,] GetEdgeCoordinates(bool floor) {
@@ -824,6 +808,58 @@ public class DatabaseHelperScript : MonoBehaviour
         else { // no entry or two entries
             Debug.Log($"There is either no record matching input {location} in tblNode and tblRoom or a record in both tblNode and tblRoom.");
             return "   ";
+        }
+    }
+
+    /**
+    This function uses SQL to get the floor of a location.
+    */
+    public bool GetLocationFloor(string id, string type) {
+        // check if room
+        if (type.Substring(0, 1) == "R") {
+            int floorInt = Convert.ToInt32(GetRoomRecord(id)[3]);
+            if (floorInt == 0) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        // check if node
+        else if (type.Substring(0, 1) == "N") {
+            int floorInt = Convert.ToInt32(GetNodeRecord(Convert.ToInt32((id)[3])));
+            if (floorInt == 0) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        // raise error
+        else {
+            // raise runtime error
+            throw new ArgumentException("Invalid input for id.");
+        }
+    }
+
+    /**
+    This function uses SQL to get the coordinates of a location.
+    */
+    public Vector2 GetLocationCoordinates(string id, string type) {
+        // check if room
+        if (type.Substring(0, 1) == "R") {
+            string[] roomRecord = GetRoomRecord(id);
+            return new Vector2(Convert.ToSingle(roomRecord[1]), Convert.ToSingle(roomRecord[2]));
+        }
+        // check if node
+        else if (type.Substring(0, 1) == "N") {
+            string[] nodeRecord = GetNodeRecord(Convert.ToInt32(id));
+            return new Vector2(Convert.ToSingle(nodeRecord[1]), Convert.ToSingle(nodeRecord[2]));
+        }
+        // raise error
+        else {
+            // raise runtime error
+            throw new ArgumentException("Invalid input for id.");
         }
     }
 
