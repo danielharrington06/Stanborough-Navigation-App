@@ -120,8 +120,15 @@ public class DijkstraPathfinderScript : MonoBehaviour
             startDijkstra = false;
         }
 
+        // check if no longer showing results but they are shown
         if (showResults == false && TextResultsVisible()) {
             ResetOutput();
+        }
+
+        // eta check
+        if (estimatedTimeOfArrival != EstimateTimeOfArrival(estimatedTime)) {
+            estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
+            OutputTextResults();
         }
     }
 
@@ -321,7 +328,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // add time duration
         TimeSpan estimatedTimeOfArrival = currentTime + timeDuration;
         // now round seconds
-        estimatedTimeOfArrival = new TimeSpan(estimatedTimeOfArrival.Hours, estimatedTimeOfArrival.Minutes, estimatedTimeOfArrival.Seconds);
+        estimatedTimeOfArrival = new TimeSpan(estimatedTimeOfArrival.Hours, estimatedTimeOfArrival.Minutes, 0);
         return estimatedTimeOfArrival;
     }
 
@@ -1408,14 +1415,14 @@ public class DijkstraPathfinderScript : MonoBehaviour
         Console.WriteLine($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
     }
 
-/**
-This function changes the values of the text output boxes to the results of the pathfinding.
-*/
-public void OutputTextResults() {
-    timeOutput.text = $"{estimatedTime.Minutes} minutes {estimatedTime.Seconds} seconds";
-    ETAOutput.text = $"{estimatedTimeOfArrival.Hours:D2}:{estimatedTimeOfArrival.Minutes:D2}";
-    distanceOutput.text = $"{estimatedDistance} metres";
-}
+    /**
+    This function changes the values of the text output boxes to the results of the pathfinding.
+    */
+    public void OutputTextResults() {
+        timeOutput.text = $"{estimatedTime.Minutes} minutes {estimatedTime.Seconds} seconds";
+        ETAOutput.text = $"{estimatedTimeOfArrival.Hours:D2}:{estimatedTimeOfArrival.Minutes:D2} arrival";
+        distanceOutput.text = $"{estimatedDistance} metres";
+    }
 
     /**
     This function resets all of the output text boxes to empty strings.

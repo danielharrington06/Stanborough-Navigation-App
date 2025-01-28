@@ -15,6 +15,7 @@ public class MatrixBuilderScript : MonoBehaviour
     private bool useTimeOfDayForCalculationUser;    
     private bool useTimeOfDayForCalculationDB;
     public bool useTimeOfDayForCalculation;
+    public bool matricesUseCongestionEstimation;
 
     public bool stepFree {get; private set;}
 
@@ -38,7 +39,14 @@ public class MatrixBuilderScript : MonoBehaviour
 
     // constructor
     void Start() {
-        
+        ResetFields();        
+    }
+
+
+    // methods
+
+    public void ResetFields() {
+
         // write edge types for array
         edgeTypes = new char[5] {'O', 'I', 'C', 'S', 'L'};
 
@@ -79,9 +87,6 @@ public class MatrixBuilderScript : MonoBehaviour
         // now setup matrices
         BuildMatricesForPathfinding();
     }
-
-
-    // methods
 
     /**
     This function calls functions that queries the database to create the non directional
