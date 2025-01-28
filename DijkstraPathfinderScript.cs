@@ -18,6 +18,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
     [Header ("UI Elements")]
     [SerializeField] private TMP_InputField startLocationInput;
     [SerializeField] private TMP_InputField targetLocationInput;
+    [SerializeField] private TMP_Text timeOutput;
+    [SerializeField] private TMP_Text ETAOutput;
+    [SerializeField] private TMP_Text distanceOutput;
     [SerializeField] private TMP_Text errorMessage;
 
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
@@ -54,7 +57,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     public bool startDijkstra = false;
     private Stopwatch stopwatch = new Stopwatch();
 
-    private List<int> dijkstraPath; // path of node id's
+    public List<int> dijkstraPath; // path of node id's
 
     public List<double[]> floor0Path {get; private set;} // path of coordinates
     public List<double[]> floor1Path {get; private set;} // path of coordinates
@@ -78,6 +81,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
             showResults = false;
             if (startLocation.id != "" && targetLocation.id != "") {
                 CarryOutAndInterpretPathfinding();
+                estimatedTimeOfArrival = new TimeSpan(0, 0, 0);
+                OutputTextResults();
                 UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
             }
             else if (startLocation.id == "" && startLocation.userText == "" && targetLocation.id == "" && targetLocation.userText == "") {
@@ -114,6 +119,10 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 errorMessage.text = "Please enter a valid target location.";
             }
             startDijkstra = false;
+        }
+
+        if (showResults == false && TextResultsVisible()) {
+            ResetOutput();
         }
     }
 
@@ -936,7 +945,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
                 string[] tEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(tRoomRecord[2]));
                 tRoomDistance = EstimateNodeRoomDistance(targetLocation.node, targetLocation.id);
-                tRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
+                tRoomTime = matrixBuilder.EstimateTimeFromDistance(tRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
             }
             else{
                 // node
@@ -1398,6 +1407,36 @@ public class DijkstraPathfinderScript : MonoBehaviour
         Console.Write("\n");
 
         Console.WriteLine($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
+    }
+
+/**
+This function changes the values of the text output boxes to the results of the pathfinding.
+*/
+public void OutputTextResults() {
+    timeOutput.text = $"{estimatedTime.Minutes} minutes {estimatedTime.Seconds} seconds";
+    ETAOutput.text = $"{estimatedTimeOfArrival.Hours:D2}:{estimatedTimeOfArrival.Minutes:D2}";
+    distanceOutput.text = $"{estimatedDistance} metres";
+}
+
+    /**
+    This function resets all of the output text boxes to empty strings.
+    */
+    public void ResetOutput() {
+        timeOutput.text = "";
+        ETAOutput.text = "";
+        distanceOutput.text = "";
+    }
+    
+    /**
+    This function returns true if any of the text results are not empty.
+    */
+    public bool TextResultsVisible() {
+        if (timeOutput.text == "" && ETAOutput.text == "" && distanceOutput.text == "") {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
     /**
