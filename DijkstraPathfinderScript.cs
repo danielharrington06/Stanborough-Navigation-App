@@ -81,7 +81,6 @@ public class DijkstraPathfinderScript : MonoBehaviour
             showResults = false;
             if (startLocation.id != "" && targetLocation.id != "") {
                 CarryOutAndInterpretPathfinding();
-                estimatedTimeOfArrival = new TimeSpan(0, 0, 0);
                 OutputTextResults();
                 UnityEngine.Debug.Log($"Elapsed Dijkstra Time: {stopwatch.ElapsedMilliseconds} ms\n");
             }
@@ -1557,7 +1556,7 @@ public void OutputTextResults() {
         else if (databaseHelper.RoomNameExists(targetLocationInput.text)) {
             // targetLocationInput exists as room_name so get room id and set user and program target location
             targetLocation.id = databaseHelper.GetRoomIDFromName(targetLocationInput.text);
-            targetLocation.userText = targetLocationInput.text;
+            targetLocation.userText = databaseHelper.GetRoomNameFromName(targetLocationInput.text);
             targetLocationInput.text = targetLocation.userText;
         }
         // check if it appears in part of a room name but only in one, not multiple
@@ -1583,7 +1582,7 @@ public void OutputTextResults() {
         else if (databaseHelper.NodeNameExists(targetLocationInput.text)) {
             // targetLocationInput exists as node name so get node id and set user and program target location
             targetLocation.id = Convert.ToString(databaseHelper.GetNodeIDFromName(targetLocationInput.text));
-            targetLocation.userText = targetLocationInput.text;
+            targetLocation.userText = databaseHelper.GetNodeNameFromName(targetLocationInput.text);
             targetLocationInput.text = targetLocation.userText;
         }
         // check if it appears in part of a node name but only in one, not multiple
