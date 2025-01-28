@@ -15,7 +15,7 @@ public class MatrixBuilderScript : MonoBehaviour
     private bool useTimeOfDayForCalculationUser;    
     private bool useTimeOfDayForCalculationDB;
     public bool useTimeOfDayForCalculation;
-    public bool matricesUseCongestionEstimation;
+    public bool matricesUseCongestion;
 
     public bool stepFree {get; private set;}
 
@@ -40,6 +40,12 @@ public class MatrixBuilderScript : MonoBehaviour
     // constructor
     void Start() {
         ResetFields();        
+    }
+
+    void Update() {
+        if (NearCongestionTime() && useTimeOfDayForCalculation != matricesUseCongestion) {
+            ResetFields();
+        }
     }
 
 
@@ -83,9 +89,6 @@ public class MatrixBuilderScript : MonoBehaviour
 
         timeMatrixStairs = new double[numberOfNodes, numberOfNodes];
         timeMatrixLifts = new double[numberOfNodes, numberOfNodes];
-
-        // now setup matrices
-        BuildMatricesForPathfinding();
     }
 
     /**
@@ -189,7 +192,6 @@ public class MatrixBuilderScript : MonoBehaviour
 
         // figure out if slow (congested) values for velocity should be used
         // calculated once so not repeating each loop
-        bool useSlowVal = NearCongestionTime() && useTimeOfDayForCalculation;
 
         // initialise temp variables within loop
         double distance; // in metres
@@ -205,7 +207,7 @@ public class MatrixBuilderScript : MonoBehaviour
                 distance = distanceMatrix[rowNum, colNum];
                 if (distance > 0) {
                     info = infoMatrix[rowNum, colNum];
-                    time = EstimateTimeFromDistance(distance, info, useSlowVal);
+                    time = EstimateTimeFromDistance(distance, info, matricesUseCongestion);
                     timeMatrix[rowNum, colNum] = time;
                 }
                 

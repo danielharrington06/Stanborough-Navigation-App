@@ -779,7 +779,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // from room record query for edge, so can get other node
         string[] edgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(roomRecord[2]));
         // estimate time from distance
-        double time = matrixBuilder.EstimateTimeFromDistance(distance, Convert.ToChar(edgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
+        double time = matrixBuilder.EstimateTimeFromDistance(distance, Convert.ToChar(edgeRecord[4]), matrixBuilder.matricesUseCongestion);
 
         return time;
     }
