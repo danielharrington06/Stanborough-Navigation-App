@@ -273,7 +273,7 @@ public class DatabaseHelperScript : MonoBehaviour
     This function uses SQL to source the boolean value controlling whether the time of day
     can be used in calculations for estimations of time.
     */
-    public bool GetUseTimeOfDayDB() {
+    public bool GetUseCongestionEstimation() {
         double boolValue = ExecuteScalarSelect("SELECT setting_value FROM tblsetting WHERE setting_name = \"useTimeOfDayForCalculationDB\"");
         if (boolValue == 0 || boolValue == 1) {
             return Convert.ToBoolean(boolValue);

@@ -8,14 +8,14 @@ public class MatrixBuilderScript : MonoBehaviour
     // fields
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private UserSettingsScript userSettings;
+    [SerializeField] private DijkstraPathfinderScript dijkstraPathfinder;
 
     private double[,] edgeVelocities = new double[5, 2];
     private char[] edgeTypes = new char[5];
 
-    private bool useTimeOfDayForCalculationUser;    
-    private bool useTimeOfDayForCalculationDB;
-    public bool useTimeOfDayForCalculation;
-    public bool matricesUseCongestion;
+    public bool congestionTime;
+    public bool canUseCongestionEstimation;
+    public bool matricesUseCongestionEstimation;
 
     public bool stepFree {get; private set;}
 
@@ -39,13 +39,36 @@ public class MatrixBuilderScript : MonoBehaviour
 
     // constructor
     void Start() {
-        ResetFields();        
+
+        // reset all fields
+        ResetFields();  
+
+        // now build matrices which involves checking congestion stuff
+        BuildMatricesForPathfinding();
     }
 
     void Update() {
-        if (NearCongestionTime() && useTimeOfDayForCalculation != matricesUseCongestion) {
+        // if it is congestion time and allowed to but the current matrices are not congestion based
+        if (IsCongestionTime() && canUseCongestionEstimation != matricesUseCongestionEstimation) {
+            // rebuild and update canUse and matricesUse
             ResetFields();
+            BuildMatricesForPathfinding();
+            // if show results is true, then run dijkstra
+            if (dijkstraPathfinder.showResults) {
+                dijkstraPathfinder.StartDijkstra();
+            }
         }
+        // if either db val or user val has changed then rebuild matrices
+        else if (UseCongestionEstimation() != canUseCongestionEstimation) {
+            // rebuild and update canUse
+            ResetFields();
+            BuildMatricesForPathfinding();
+            // if show results is true, then run dijkstra
+            if (dijkstraPathfinder.showResults) {
+                dijkstraPathfinder.StartDijkstra();
+            }
+        }
+        
     }
 
 
@@ -69,8 +92,6 @@ public class MatrixBuilderScript : MonoBehaviour
         edgeVelocities[3, 1] = databaseHelper.GetVelocityValue(edgeTypes[3], true); // stairs slow
         edgeVelocities[4, 0] = databaseHelper.GetVelocityValue(edgeTypes[4], false); // lift normal
         edgeVelocities[4, 1] = databaseHelper.GetVelocityValue(edgeTypes[4], true); // lift slow
-
-        CheckTimeOfDayEstimation();
 
         // get user settings for step free access
         stepFree = userSettings.stepFree; // false means using stairs
@@ -207,7 +228,7 @@ public class MatrixBuilderScript : MonoBehaviour
                 distance = distanceMatrix[rowNum, colNum];
                 if (distance > 0) {
                     info = infoMatrix[rowNum, colNum];
-                    time = EstimateTimeFromDistance(distance, info, matricesUseCongestion);
+                    time = EstimateTimeFromDistance(distance, info, matricesUseCongestionEstimation);
                     timeMatrix[rowNum, colNum] = time;
                 }
                 
@@ -223,7 +244,7 @@ public class MatrixBuilderScript : MonoBehaviour
     It takes both these values, considers what type of path it is, so it can then assign a velocity, then uses the
     time = distance / speed formula to return a value for time.
     */
-    public double EstimateTimeFromDistance(double distance, char info, bool useSlowVal) {
+    public double EstimateTimeFromDistance(double distance, char info, bool useCongestionEstimation) {
         
         double realVelocity;
         double time;
@@ -232,7 +253,7 @@ public class MatrixBuilderScript : MonoBehaviour
         int edgeTypeIndex = Array.IndexOf(edgeTypes, info);
         
         // get velocity from edge velocities matrix
-        realVelocity = edgeVelocities[edgeTypeIndex, Convert.ToInt32(useSlowVal)];
+        realVelocity = edgeVelocities[edgeTypeIndex, Convert.ToInt32(useCongestionEstimation)];
 
         // use t = s / v formula
         time = distance/realVelocity;
@@ -244,9 +265,9 @@ public class MatrixBuilderScript : MonoBehaviour
     This function is called to check how near the current time is to a list of congestion times.
     Makes use of the TimeSpan datatypes to represent times in a day
     */
-    public bool NearCongestionTime() {
+    public bool IsCongestionTime() {
 
-        bool isNearCongestionTime = false;
+        /* bool isNearCongestionTime = false;
 
         // using timespans as times of the day
         // source from database
@@ -268,7 +289,8 @@ public class MatrixBuilderScript : MonoBehaviour
             }
         }
 
-        return isNearCongestionTime;
+        return isNearCongestionTime; */
+        return congestionTime;
     }
 
     /**
@@ -316,17 +338,22 @@ public class MatrixBuilderScript : MonoBehaviour
         // start stopwatch
         stopwatch.Start();
 
+        // check if db and user allows use of congestion estimation at all
+        canUseCongestionEstimation = UseCongestionEstimation();
+        
+        // check if congestion estimation should be used initially based off above and if near congestion time
+        matricesUseCongestionEstimation = IsCongestionTime() && canUseCongestionEstimation;
+
         BuildNormalMatrices();
         BuildOWSMatrices();
         timeMatrixDefault = ConfigureTimeMatrix(distanceMatrixDefault, infoMatrixDefault);
         // fill time matrix stairs and time matrix lifts
-
-        // not step free, so one way system
+        
         if (userSettings.oneWaySystem) {
-        timeMatrixStairs = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixOneWay, infoMatrixOneWay), infoMatrixOneWay, false);
+            timeMatrixStairs = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixOneWay, infoMatrixOneWay), infoMatrixOneWay, false);
         }
         else {
-        timeMatrixStairs = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixDefault, infoMatrixDefault), infoMatrixDefault, false);
+            timeMatrixStairs = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixDefault, infoMatrixDefault), infoMatrixDefault, false);
         }
 
         // step free so no one way system
@@ -340,15 +367,10 @@ public class MatrixBuilderScript : MonoBehaviour
     }
 
     /**
-    This function chekcs if time estimation should be used in calculations.
+    This function chekcs if time estimation can be used in calculations.
     */
-    public void CheckTimeOfDayEstimation() {
-        // now check settings
-        useTimeOfDayForCalculationUser = userSettings.useTimeOfDayForCalculation; // sourced from user settings
-        useTimeOfDayForCalculationDB = databaseHelper.GetUseTimeOfDayDB(); // sourced from DB settings
-
-        // if DB sets it as false, then it is false, otherwise, follow user's settings
-        // this is just 'and' gate
-        useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
+    public bool UseCongestionEstimation() {
+        // check user settings and database tblsetting
+        return userSettings.useCongestionEstimation && databaseHelper.GetUseCongestionEstimation();
     }
 }

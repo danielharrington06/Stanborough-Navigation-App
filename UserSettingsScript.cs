@@ -20,10 +20,10 @@ public class UserSettingsScript : MonoBehaviour
     [Header ("User Settings")]
     public bool oneWaySystem;
     public bool stepFree;
-    public bool useTimeOfDayForCalculation;
+    public bool useCongestionEstimation = true;
     public bool invertScroll;
     
-    void Start(){
+    void Awake() {
         floor = false; // false is floor 0, true is floor 1
         mapFocussed = true;
         floorText.text = "0";
@@ -33,13 +33,13 @@ public class UserSettingsScript : MonoBehaviour
     public void ResetSettings() {
         oneWaySystem = true;
         stepFree = false;
-        useTimeOfDayForCalculation = true;
+        useCongestionEstimation = true;
         invertScroll = false;
         
         if (settingsPanel.activeSelf) { // check if settingsPanel is active
             OWSToggle.SetStateAndStartAnimation(oneWaySystem);
             SFToggle.SetStateAndStartAnimation(stepFree);
-            UTEToggle.SetStateAndStartAnimation(useTimeOfDayForCalculation);
+            UTEToggle.SetStateAndStartAnimation(useCongestionEstimation);
             ISToggle.SetStateAndStartAnimation(invertScroll);
         }
     }
@@ -84,12 +84,12 @@ public class UserSettingsScript : MonoBehaviour
         OWSToggle.SetStateAndStartAnimation(oneWaySystem);
     }
 
-    public void SetUseTimeOfDayForCalculationOn() {
-        useTimeOfDayForCalculation = true;
+    public void SetuseCongestionEstimationOn() {
+        useCongestionEstimation = true;
     }
 
-    public void SetUseTimeOfDayForCalculationOff() {
-        useTimeOfDayForCalculation = false;
+    public void SetuseCongestionEstimationOff() {
+        useCongestionEstimation = false;
     }
 
     public void SetInvertScrollOn() {

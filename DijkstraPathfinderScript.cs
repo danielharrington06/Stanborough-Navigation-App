@@ -779,7 +779,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         // from room record query for edge, so can get other node
         string[] edgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(roomRecord[2]));
         // estimate time from distance
-        double time = matrixBuilder.EstimateTimeFromDistance(distance, Convert.ToChar(edgeRecord[4]), matrixBuilder.matricesUseCongestion);
+        double time = matrixBuilder.EstimateTimeFromDistance(distance, Convert.ToChar(edgeRecord[4]), matrixBuilder.matricesUseCongestionEstimation);
 
         return time;
     }
@@ -931,7 +931,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 string[] sRoomRecord = databaseHelper.GetRoomRecord(startLocation.id);
                 string[] sEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(sRoomRecord[2]));
                 sRoomDistance = EstimateNodeRoomDistance(startLocation.node, startLocation.id);
-                sRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(sEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
+                sRoomTime = matrixBuilder.EstimateTimeFromDistance(sRoomDistance, Convert.ToChar(sEdgeRecord[4]), matrixBuilder.matricesUseCongestionEstimation);
             }
             else{
                 // node
@@ -951,7 +951,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
                 string[] tRoomRecord = databaseHelper.GetRoomRecord(targetLocation.id);
                 string[] tEdgeRecord = databaseHelper.GetEdgeRecord(Convert.ToInt32(tRoomRecord[2]));
                 tRoomDistance = EstimateNodeRoomDistance(targetLocation.node, targetLocation.id);
-                tRoomTime = matrixBuilder.EstimateTimeFromDistance(tRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
+                tRoomTime = matrixBuilder.EstimateTimeFromDistance(tRoomDistance, Convert.ToChar(tEdgeRecord[4]), matrixBuilder.matricesUseCongestionEstimation);
             }
             else{
                 // node
@@ -1004,7 +1004,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
             estimatedDistance = Math.Round(Convert.ToDouble(edgeRecord[3]) - (dist1 + dist2), 1);
 
             // find estimated time in secs
-            estimatedTimeInSecs = matrixBuilder.EstimateTimeFromDistance(estimatedDistance, Convert.ToChar(edgeRecord[4]), matrixBuilder.NearCongestionTime() && matrixBuilder.useTimeOfDayForCalculation);
+            estimatedTimeInSecs = matrixBuilder.EstimateTimeFromDistance(estimatedDistance, Convert.ToChar(edgeRecord[4]), matrixBuilder.matricesUseCongestionEstimation);
 
             // and then other time things
             estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
