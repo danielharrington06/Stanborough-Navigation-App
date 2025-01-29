@@ -13,7 +13,6 @@ public class MatrixBuilderScript : MonoBehaviour
     private double[,] edgeVelocities = new double[5, 2];
     private char[] edgeTypes = new char[5];
 
-    public bool congestionTime;
     public bool canUseCongestionEstimation;
     public bool matricesUseCongestionEstimation;
 
@@ -49,7 +48,7 @@ public class MatrixBuilderScript : MonoBehaviour
 
     void Update() {
         // if it is congestion time and allowed to but the current matrices are not congestion based
-        if (IsCongestionTime() && canUseCongestionEstimation != matricesUseCongestionEstimation) {
+        if ((IsCongestionTime() && canUseCongestionEstimation) != matricesUseCongestionEstimation) {
             // rebuild and update canUse and matricesUse
             ResetFields();
             BuildMatricesForPathfinding();
@@ -267,7 +266,7 @@ public class MatrixBuilderScript : MonoBehaviour
     */
     public bool IsCongestionTime() {
 
-        /* bool isNearCongestionTime = false;
+        bool isNearCongestionTime = false;
 
         // using timespans as times of the day
         // source from database
@@ -289,8 +288,7 @@ public class MatrixBuilderScript : MonoBehaviour
             }
         }
 
-        return isNearCongestionTime; */
-        return congestionTime;
+        return isNearCongestionTime;
     }
 
     /**
