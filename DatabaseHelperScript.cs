@@ -136,17 +136,19 @@ public class DatabaseHelperScript : MonoBehaviour
     This function takes a select query and returns a list of field names and a list of values.
     It works with a paramater to allow for paramaterised queries.
     */
-    public (List<string>, List<List<object>>) ExecuteParametrisedSelect(string query, Dictionary<string, object> parameters)
-    {
-        // Validate that query only contains letters, numbers, spaces, underscores, and safe SQL characters
-        if (!Regex.IsMatch(query, @"^[a-zA-Z0-9 ]+$"))
-        {
-            dijkstraPathfinder.errorMessage.text = "Invalid characters detected in the input.";
-            throw new ArgumentException("Invalid characters detected in the query.");
-        }
-
+    public (List<string>, List<List<object>>) ExecuteParametrisedSelect(string query, Dictionary<string, object> parameters) {
+        
         List<List<object>> columnedValues = new List<List<object>>();
         List<string> fieldNames = new List<string>();
+        
+        // validate each paramater value is only alphanumeric and spaces
+        foreach (var param in parameters) {
+            if (!(param.Value is string value) || !Regex.IsMatch(value, @"^[a-zA-Z0-9 %]+$")) {
+                dijkstraPathfinder.errorMessage.text = $"Invalid characters detected in input: {param.Key}";
+                Debug.Log($"Invalid characters detected in input: {param.Key}");
+                return (fieldNames, columnedValues);
+            }
+        }
 
         if (OpenConnection())
         {
@@ -241,12 +243,13 @@ public class DatabaseHelperScript : MonoBehaviour
     {   
         double scalarValue = -1;
 
-        // Validate that query only contains letters, numbers, spaces, underscores, and safe SQL characters
-        if (!Regex.IsMatch(query, @"^[a-zA-Z0-9 ]+$"))
-        {
-            dijkstraPathfinder.errorMessage.text = "Invalid characters detected in the input.";
-            Debug.Log("Invalid characters detected in the input.");
-            return scalarValue;
+        // validate each paramater value is only alphanumeric and spaces
+        foreach (var param in parameters) {
+            if (!(param.Value is string value) || !Regex.IsMatch(value, @"^[a-zA-Z0-9 %]+$")) {
+                dijkstraPathfinder.errorMessage.text = $"Invalid characters detected in input: {param.Key}";
+                Debug.Log($"Invalid characters detected in input: {param.Key}");
+                return scalarValue;
+            }
         }
 
         if (OpenConnection())
