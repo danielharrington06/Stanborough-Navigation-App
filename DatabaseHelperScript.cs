@@ -264,13 +264,10 @@ public class DatabaseHelperScript : MonoBehaviour
                         command.Parameters.AddWithValue(param.Key, param.Value);
                     }
 
-                    using (MySqlDataReader reader = command.ExecuteReader())
-                    {
-                        // execute scalar will only return one value
-                        object result = command.ExecuteScalar();
-                        if (result != null) {
-                            scalarValue = double.Parse(result+"");
-                        }
+                    // execute scalar will only return one value
+                    object result = command.ExecuteScalar();
+                    if (result != null) {
+                        scalarValue = double.Parse(result+"");
                     }
                 }
             }  
