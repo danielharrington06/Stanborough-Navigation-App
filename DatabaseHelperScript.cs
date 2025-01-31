@@ -20,8 +20,8 @@ public class DatabaseHelperScript : MonoBehaviour
         // configure connection settings
         server = "localhost";
         database = "stanavappdb";
-        uid = "root";
-        password = "rU2n4s?Qf6gEb!pIbci8";
+        uid = "app_user";
+        password = "dfx0qx!m~?08.Ok9?CHq";
         string connectionString;
         connectionString = "SERVER=" + server + ";" + "DATABASE=" + database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
 
@@ -89,9 +89,18 @@ public class DatabaseHelperScript : MonoBehaviour
             // create command
             MySqlCommand command = new MySqlCommand(query, connection);
             // execute command
-            command.ExecuteNonQuery();
-            // close connection
-            CloseConnection();
+            try {
+                command.ExecuteNonQuery();
+                // close connection
+                CloseConnection();
+            }
+            catch (MySqlException ex) {
+                // close connection
+                Console.WriteLine(ex.Message);
+                CloseConnection();
+                return false;
+            }
+            
 
             complete = true;
         }
