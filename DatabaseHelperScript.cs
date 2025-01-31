@@ -144,7 +144,7 @@ public class DatabaseHelperScript : MonoBehaviour
         // validate each paramater value is only alphanumeric and spaces
         foreach (var param in parameters) {
             if (!(param.Value is string value) || !Regex.IsMatch(value, @"^[a-zA-Z0-9 %]+$")) {
-                dijkstraPathfinder.errorMessage.text = $"Invalid characters detected in input: {param.Key}";
+                dijkstraPathfinder.errorMessage.text = "Invalid characters detected in the input.";
                 Debug.Log($"Invalid characters detected in input: {param.Key}");
                 return (fieldNames, columnedValues);
             }
@@ -246,7 +246,7 @@ public class DatabaseHelperScript : MonoBehaviour
         // validate each paramater value is only alphanumeric and spaces
         foreach (var param in parameters) {
             if (!(param.Value is string value) || !Regex.IsMatch(value, @"^[a-zA-Z0-9 %]+$")) {
-                dijkstraPathfinder.errorMessage.text = $"Invalid characters detected in input: {param.Key}";
+                dijkstraPathfinder.errorMessage.text = "Invalid characters detected in the input.";
                 Debug.Log($"Invalid characters detected in input: {param.Key}");
                 return scalarValue;
             }
