@@ -48,13 +48,13 @@ public class DatabaseHelperScript : MonoBehaviour
             switch (ex.Number)
             {
                 case 0:
-                    Console.WriteLine("Cannot connect to sever.");
+                    Debug.Log("Cannot connect to sever.");
                     break;
                 case 1045:
-                    Console.WriteLine("Invalid username/password.");
+                    Debug.Log("Invalid username/password.");
                     break;
                 default:
-                    Console.WriteLine("An error has occured.");
+                    Debug.Log("An error has occured: " + ex.Message);
                     break;
             }
             return false;
@@ -212,7 +212,6 @@ public class DatabaseHelperScript : MonoBehaviour
                 // using is more efficient and disposes of resources when done
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
-
                     using (MySqlDataReader reader = command.ExecuteReader())
                     {
                         // execute scalar will only return one value
@@ -221,11 +220,11 @@ public class DatabaseHelperScript : MonoBehaviour
                             scalarValue = double.Parse(result+"");
                         }
                     }
-                }
-            }  
+                }  
+            }
             catch (Exception ex)
             {
-                Console.WriteLine("Error executing query: " + ex.Message);
+                Debug.Log("Error executing query: " + ex.Message);
             }
             finally
             {
@@ -1073,10 +1072,25 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
+    This function uses SQL to check if a given room id has a room name and returns it if it does or an empty string if not.
+    */
+    public string GetRoomNameFromID(string roomID) {
+        var parameters = new Dictionary<string, object> {{"@room_id", roomID}};
+        var (roomFields, roomValues) = ExecuteParametrisedSelect("select room_name from tblRoom where room_id = @room_id", parameters);
+        if (roomValues.Count == 0) {
+            return "";
+        }
+        else {
+            return Convert.ToString(roomValues[0][0]);
+        }
+    }
+
+    /**
     This function uses SQL to return true if a room id exists within tblRoom.
     */
-    public bool RoomIDExists(string roomCode) {
-        return Convert.ToInt32(ExecuteScalarSelect("select count(room_id) from tblRoom where room_id = \"" + roomCode + "\"")) == 1;
+    public bool RoomIDExists(string roomID) {
+        var parameters = new Dictionary<string, object> {{"@room_id", roomID}};
+        return Convert.ToInt32(ExecuteParametrisedScalarSelect("select count(room_id) from tblRoom where room_id = @room_id", parameters)) == 1;
     }
 
     /**
@@ -1084,14 +1098,16 @@ public class DatabaseHelperScript : MonoBehaviour
     Not case sensitive.
     */
     public bool RoomNameExists(string roomName) {
-        return Convert.ToInt32(ExecuteScalarSelect("select count(room_id) from tblRoom where room_name = \"" + roomName + "\"")) == 1;
+        var parameters = new Dictionary<string, object> {{"@room_name", roomName}};
+        return Convert.ToInt32(ExecuteParametrisedScalarSelect("select count(room_id) from tblRoom where room_name = @room_name", parameters)) == 1;
     }
 
     /**
     This function uses SQL to return the exact room id for the input room name.
     */
     public string GetRoomIDFromName(string roomName) {
-        var (roomFields, roomValues) = ExecuteSelect("select room_id from tblRoom where room_name = \"" + roomName + "\"");
+        var parameters = new Dictionary<string, object> {{"@room_name", roomName}};
+        var (roomFields, roomValues) = ExecuteParametrisedSelect("select room_id from tblRoom where room_name = @room_name", parameters);
         return Convert.ToString(roomValues[0][0]);
     }
 
@@ -1099,7 +1115,8 @@ public class DatabaseHelperScript : MonoBehaviour
     This function uses SQL to return the correctly title cased room name for the input room name.
     */
     public string GetRoomNameFromName(string roomName) {
-        var (roomFields, roomValues) = ExecuteSelect("select room_name from tblRoom where room_name = \"" + roomName + "\"");
+        var parameters = new Dictionary<string, object> {{"@room_name", roomName}};
+        var (roomFields, roomValues) = ExecuteParametrisedSelect("select room_name from tblRoom where room_name = @room_name", parameters);
         return Convert.ToString(roomValues[0][0]);
     }
 
@@ -1107,14 +1124,16 @@ public class DatabaseHelperScript : MonoBehaviour
     This function uses SQL to return the number of records where the input is a substring of room name.
     */
     public int GetRoomNameSubstringCount(string roomName) {
-        return Convert.ToInt32(ExecuteScalarSelect("select count(room_id) from tblRoom where room_name like \"%" + roomName + "%\""));
+        var parameters = new Dictionary<string, object> {{"@room_name", "%" + roomName + "%"}};
+        return Convert.ToInt32(ExecuteParametrisedScalarSelect("select count(room_id) from tblRoom where room_name like @room_name", parameters));
     }
 
     /**
     This function uses SQL to return the exact room_id where there is only one record where the input is a substring of the room name.
     */
     public string GetRoomIDFromSubstringName(string roomName) {
-        var (roomFields, roomValues) = ExecuteSelect("select room_id from tblRoom where room_name like \"%" + roomName + "%\"");
+        var parameters = new Dictionary<string, object> {{"@room_name", "%" + roomName + "%"}};
+        var (roomFields, roomValues) = ExecuteParametrisedSelect("select room_id from tblRoom where room_name like @room_name", parameters);
         return Convert.ToString(roomValues[0][0]);
     }
 
@@ -1122,7 +1141,8 @@ public class DatabaseHelperScript : MonoBehaviour
     This function uses SQL to return the room_name where there is only one record where the input is a substring of the room name.
     */
     public string GetRoomNameFromSubstringName(string roomName) {
-        var (roomFields, roomValues) = ExecuteSelect("select room_name from tblRoom where room_name like \"%" + roomName + "%\"");
+        var parameters = new Dictionary<string, object> {{"@room_name", "%" + roomName + "%"}};
+        var (roomFields, roomValues) = ExecuteParametrisedSelect("select room_name from tblRoom where room_name like @room_name", parameters);
         return Convert.ToString(roomValues[0][0]);
     }
 
@@ -1133,73 +1153,16 @@ public class DatabaseHelperScript : MonoBehaviour
         if (!int.TryParse(nodeID, out _)) { // contains non intger characters
             return false;
         }
-        return Convert.ToInt32(ExecuteScalarSelect("select count(node_id) from tblNode where node_id = " + nodeID)) == 1;
-    }
-
-    /**
-    This function uses SQL to return true if a node record exists for the node name.
-    */
-    public bool NodeNameExists(string nodeName) {
-        return Convert.ToInt32(ExecuteScalarSelect("select count(node_id) from tblNode where node_name = \"" + nodeName + "\"")) == 1;
-    }
-
-    /**
-    This function uses SQL to return the exact node id for the input node name/
-    */
-    public int GetNodeIDFromName(string nodeName) {
-        var (nodeFields, nodeValues) = ExecuteSelect("select node_id from tblNode where node_name = \"" + nodeName + "\"");
-        return Convert.ToInt32(nodeValues[0][0]);
-    }
-
-    /**
-    This function uses SQL to return the correctly title cased node name for the input node name.
-    */
-    public string GetNodeNameFromName(string nodeName) {
-        var (nodeFields, nodeValues) = ExecuteSelect("select node_name from tblNode where node_name = \"" + nodeName + "\"");
-        return Convert.ToString(nodeValues[0][0]);
-    }
-
-    /**
-    This function uses SQL to return the number of records where the input is a substring of node name.
-    */
-    public int GetNodeNameSubstringCount(string nodeName) {
-        return Convert.ToInt32(ExecuteScalarSelect("select count(node_id) from tblNode where node_name like \"%" + nodeName + "%\""));
-    }
-
-    /**
-    This function uses SQL to return the exact node_id where there is only one record where the input is a substring of the node name.
-    */
-    public int GetNodeIDFromSubstringName(string nodeName) {
-        var (nodeFields, nodeValues) = ExecuteSelect("select node_id from tblNode where node_name like \"%" + nodeName + "%\"");
-        return Convert.ToInt32(nodeValues[0][0]);
-    }
-
-    /**
-    This function uses SQL to return the node_name where there is only one record where the input is a substring of the node name.
-    */
-    public string GetNodeNameFromSubstringName(string nodeName) {
-        var (nodeFields, nodeValues) = ExecuteSelect("select node_name from tblNode where node_name like \"%" + nodeName + "%\"");
-        return Convert.ToString(nodeValues[0][0]);
-    }
-
-    /**
-    This function uses SQL to check if a given room id has a room name and returns it if it does or an empty string if not.
-    */
-    public string GetRoomNameFromID(string roomID) {
-        var (roomFields, roomValues) = ExecuteSelect("select room_name from tblRoom where room_id = \"" + roomID + "\"");
-        if (roomValues.Count == 0) {
-            return "";
-        }
-        else {
-            return Convert.ToString(roomValues[0][0]);
-        }
+        var parameters = new Dictionary<string, object> {{"@node_id", nodeID}};
+        return Convert.ToInt32(ExecuteParametrisedScalarSelect("select count(node_id) from tblNode where node_id = @node_id", parameters)) == 1;
     }
 
     /**
     This function uses SQL to check if a given node id has a node name and returns it if it does or an empty string if not.
     */
     public string GetNodeNameFromID(string nodeID) {
-        var (nodeFields, nodeValues) = ExecuteSelect("select node_name from tblNode where node_id = " + nodeID);
+        var parameters = new Dictionary<string, object> {{"@node_id", nodeID}};
+        var (nodeFields, nodeValues) = ExecuteParametrisedSelect("select node_name from tblNode where node_id = @node_id", parameters);
         if (nodeValues.Count == 0) {
             return "";
         }
@@ -1208,5 +1171,55 @@ public class DatabaseHelperScript : MonoBehaviour
         }
     }
 
-    
+    /**
+    This function uses SQL to return true if a node record exists for the node name.
+    */
+    public bool NodeNameExists(string nodeName) {
+        var parameters = new Dictionary<string, object> {{"@node_name", nodeName}};
+        return Convert.ToInt32(ExecuteParametrisedScalarSelect("select count(node_id) from tblNode where node_name = @node_name", parameters)) == 1;
+    }
+
+    /**
+    This function uses SQL to return the exact node id for the input node name/
+    */
+    public int GetNodeIDFromName(string nodeName) {
+        var parameters = new Dictionary<string, object> {{"@node_name", nodeName}};
+        var (nodeFields, nodeValues) = ExecuteParametrisedSelect("select node_id from tblNode where node_name = @node_name", parameters);
+        return Convert.ToInt32(nodeValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the correctly title cased node name for the input node name.
+    */
+    public string GetNodeNameFromName(string nodeName) {
+        var parameters = new Dictionary<string, object> {{"@node_name", nodeName}};
+        var (nodeFields, nodeValues) = ExecuteParametrisedSelect("select node_name from tblNode where node_name = @node_name", parameters);
+        return Convert.ToString(nodeValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the number of records where the input is a substring of node name.
+    */
+    public int GetNodeNameSubstringCount(string nodeName) {
+        var parameters = new Dictionary<string, object> {{"@node_name", "%" + nodeName + "%"}};
+        return Convert.ToInt32(ExecuteParametrisedScalarSelect("select count(node_id) from tblNode where node_name like @node_name", parameters));
+    }
+
+    /**
+    This function uses SQL to return the exact node_id where there is only one record where the input is a substring of the node name.
+    */
+    public int GetNodeIDFromSubstringName(string nodeName) {
+        var parameters = new Dictionary<string, object> {{"@node_name", "%" + nodeName + "%"}};
+        var (nodeFields, nodeValues) = ExecuteParametrisedSelect("select node_id from tblNode where node_name like @node_name", parameters);
+        return Convert.ToInt32(nodeValues[0][0]);
+    }
+
+    /**
+    This function uses SQL to return the node_name where there is only one record where the input is a substring of the node name.
+    */
+    public string GetNodeNameFromSubstringName(string nodeName) {
+        var parameters = new Dictionary<string, object> {{"@node_name", "%" + nodeName + "%"}};
+        var (nodeFields, nodeValues) = ExecuteParametrisedSelect("select node_name from tblNode where node_name like @node_name", parameters);
+        return Convert.ToString(nodeValues[0][0]);
+    }
 }
