@@ -160,7 +160,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
             distanceMatrix = matrixBuilder.distanceMatrixDefault;
             infoMatrix = matrixBuilder.infoMatrixDefault;
         }
-
+        
         dijkstraDistances = new double[numberOfNodes];
         estimatedTime = new TimeSpan(0, 0, 0);
         estimatedTimeOfArrival = new TimeSpan(0, 0, 0);
