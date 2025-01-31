@@ -1518,14 +1518,18 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // startLocationInput exists as a substring of multiple room_names so set startLocation.id to ""
             startLocation.id = "";
             startLocation.userText = startLocationInput.text;
-            errorMessage.text = "Start location was too vague. Please be more specific.";
+            if (errorMessage.text != "Invalid characters detected in the input.") {
+                errorMessage.text = "Start location was too vague. Please be more specific.";
+            }
         }
         // error message if no substring records found
         else {
             // startLocationInput does not exist as a substring of any node names so set startLocation.id to ""
             startLocation.id = "";
             startLocation.userText = startLocationInput.text;
-            errorMessage.text = "Start location was not found.";
+            if (errorMessage.text != "Invalid characters detected in the input.") {
+                errorMessage.text = "Start location was not found.";
+            }
         }
 
         if (startLocation.id != "") {
@@ -1603,14 +1607,18 @@ public class DijkstraPathfinderScript : MonoBehaviour
             // targetLocationInput exists as a substring of multiple room_names so set targetLocation.id to ""
             targetLocation.id = "";
             targetLocation.userText = targetLocationInput.text;
-            errorMessage.text = "Target location was too vague. Please be more specific.";
+            if (errorMessage.text != "Invalid characters detected in the input.") {
+                errorMessage.text = "Target location was too vague. Please be more specific.";
+            }
         }
         // error message if no substring records found
         else {
             // targetLocationInput does not exist as a substring of any node names so set targetLocation.id to ""
             targetLocation.id = "";
             targetLocation.userText = targetLocationInput.text;
-            errorMessage.text = "Target location was not found.";
+            if (errorMessage.text != "Invalid characters detected in the input.") {
+                errorMessage.text = "Target location was not found.";
+            }
         }
 
         if (targetLocation.id != "") {

@@ -212,13 +212,10 @@ public class DatabaseHelperScript : MonoBehaviour
                 // using is more efficient and disposes of resources when done
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
-                    using (MySqlDataReader reader = command.ExecuteReader())
-                    {
-                        // execute scalar will only return one value
-                        object result = command.ExecuteScalar();
-                        if (result != null) {
-                            scalarValue = double.Parse(result+"");
-                        }
+                    // execute scalar will only return one value
+                    object result = command.ExecuteScalar();
+                    if (result != null) {
+                        scalarValue = double.Parse(result+"");
                     }
                 }  
             }
@@ -248,6 +245,7 @@ public class DatabaseHelperScript : MonoBehaviour
         if (!Regex.IsMatch(query, @"^[a-zA-Z0-9 ]+$"))
         {
             dijkstraPathfinder.errorMessage.text = "Invalid characters detected in the input.";
+            Debug.Log("Invalid characters detected in the input.");
             return scalarValue;
         }
 
@@ -274,6 +272,7 @@ public class DatabaseHelperScript : MonoBehaviour
             catch (Exception ex)
             {
                 Console.WriteLine("Error executing query: " + ex.Message);
+                Debug.Log("Error executing query: " + ex.Message);
             }
             finally
             {
