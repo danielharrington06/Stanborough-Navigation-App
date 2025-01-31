@@ -21,10 +21,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
     [SerializeField] private TMP_Text timeOutput;
     [SerializeField] private TMP_Text ETAOutput;
     [SerializeField] private TMP_Text distanceOutput;
-    [SerializeField] private TMP_Text errorMessage;
+    [SerializeField] public TMP_Text errorMessage;
 
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
-    
     
     int numberOfNodes;
 

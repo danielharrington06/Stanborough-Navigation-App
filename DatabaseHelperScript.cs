@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MySqlConnector;
+using System.Text.RegularExpressions;
 
 
 public class DatabaseHelperScript : MonoBehaviour
 {
     // fields
     [SerializeField] private UserSettingsScript userSettings;
+    [SerializeField] private DijkstraPathfinderScript dijkstraPathfinder;
     public MySqlConnection connection;
     private string server;
     private string database;
@@ -77,52 +79,6 @@ public class DatabaseHelperScript : MonoBehaviour
     }
 
     /**
-    This function takes an insert, delete or update query and carries out the action.
-    It returns whether or not it was successful.
-    It cannot be used by select as this returns results.
-    */
-    private bool ExecuteSqlVoid(string query) {
-
-        bool complete = false;
-        // open connection
-        if (OpenConnection() == true) {
-            // create command
-            MySqlCommand command = new MySqlCommand(query, connection);
-            // execute command
-            try {
-                command.ExecuteNonQuery();
-                // close connection
-                CloseConnection();
-            }
-            catch (MySqlException ex) {
-                // close connection
-                Console.WriteLine(ex.Message);
-                CloseConnection();
-                return false;
-            }
-            
-
-            complete = true;
-        }
-        return complete;
-    }
-
-    // The following three methods are not technically needed
-    // but are nice as it will be clearer when reading code what functions do.
-
-    private bool ExecuteInsert(string query) {
-        return ExecuteSqlVoid(query);
-    }
-
-    private bool ExecuteUpdate(string query) {
-        return ExecuteSqlVoid(query);
-    }
-
-    private bool ExecuteDelete(string query) {
-        return ExecuteSqlVoid(query);
-    }
-
-    /**
     This function takes a select query and returns a list of field names and a list of values.
     It works for any select statement.
     */
@@ -134,34 +90,112 @@ public class DatabaseHelperScript : MonoBehaviour
         List<string> fieldNames = new List<string>();
 
         if (OpenConnection() == true) {
-            // create mysql command
-            MySqlCommand command = new MySqlCommand(query, connection);
-            // execute command
-            MySqlDataReader reader = command.ExecuteReader();
-
-            // read field names
-            for (int i = 0; i < reader.FieldCount; i++) {
-                fieldNames.Add(reader.GetName(i));
-            }
-
-            // read data
-            while (reader.Read())
-            {
-                var rowValues = new List<object>();
-                for (int i = 0; i < reader.FieldCount; i++)
+            try
+            {   
+                // using is more efficient and disposes of resources when done
+                using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
-                    rowValues.Add(reader[i]);
-                }
-                columnedValues.Add(rowValues);
-            }
 
-            // close connection
-            CloseConnection();
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        // read field names
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            fieldNames.Add(reader.GetName(i));
+                        }
+
+                        // read data
+                        while (reader.Read())
+                        {
+                            var rowValues = new List<object>();
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                rowValues.Add(reader[i]);
+                            }
+                            columnedValues.Add(rowValues);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error executing query: " + ex.Message);
+            }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
         return (fieldNames, columnedValues);
     }
 
+    
+
+    /**
+    This function takes a select query and returns a list of field names and a list of values.
+    It works with a paramater to allow for paramaterised queries.
+    */
+    public (List<string>, List<List<object>>) ExecuteParametrisedSelect(string query, Dictionary<string, object> parameters)
+    {
+        // Validate that query only contains letters, numbers, spaces, underscores, and safe SQL characters
+        if (!Regex.IsMatch(query, @"^[a-zA-Z0-9 ]+$"))
+        {
+            dijkstraPathfinder.errorMessage.text = "Invalid characters detected in the input.";
+            throw new ArgumentException("Invalid characters detected in the query.");
+        }
+
+        List<List<object>> columnedValues = new List<List<object>>();
+        List<string> fieldNames = new List<string>();
+
+        if (OpenConnection())
+        {
+            try
+            {   
+                // using is more efficient and disposes of resources when done
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    // add parameters safely
+                    foreach (var param in parameters)
+                    {
+                        command.Parameters.AddWithValue(param.Key, param.Value);
+                    }
+
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        // read field names
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            fieldNames.Add(reader.GetName(i));
+                        }
+
+                        // read data
+                        while (reader.Read())
+                        {
+                            var rowValues = new List<object>();
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                rowValues.Add(reader[i]);
+                            }
+                            columnedValues.Add(rowValues);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error executing query: " + ex.Message);
+            }
+            finally
+            {
+                // closes connection regardless
+                CloseConnection();
+            }
+        }
+
+        return (fieldNames, columnedValues);
+    }
+    
     /**
     This function carries out the scalar select.
     This is useful for Count(*) or average of values.
