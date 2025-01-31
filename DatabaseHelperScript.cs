@@ -195,30 +195,96 @@ public class DatabaseHelperScript : MonoBehaviour
 
         return (fieldNames, columnedValues);
     }
-    
+
     /**
     This function carries out the scalar select.
     This is useful for Count(*) or average of values.
     It takes a query and returns -1 if there is an error.
     */
-    private double ExecuteScalarSelect(string query) {
-
+    public double ExecuteScalarSelect(string query)
+    {   
         double scalarValue = -1;
 
-        // open connection
-        if (OpenConnection() == true) {
-            // create mysql command
-            MySqlCommand command = new MySqlCommand(query, connection);
+        if (OpenConnection())
+        {
+            try
+            {   
+                // using is more efficient and disposes of resources when done
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
 
-            // execute scalar will only return one value
-            object result = command.ExecuteScalar();
-            if (result != null) {
-                scalarValue = double.Parse(result+"");
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        // execute scalar will only return one value
+                        object result = command.ExecuteScalar();
+                        if (result != null) {
+                            scalarValue = double.Parse(result+"");
+                        }
+                    }
+                }
+            }  
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error executing query: " + ex.Message);
             }
+            finally
+            {
+                // closes connection regardless
+                CloseConnection();
+            }
+        }
 
-            // close connection
-            CloseConnection();
+        return scalarValue;
+    }
+
+    /**
+    This function carries out a scalar select and returns a double which is -1 if an error occured.
+    It works with a paramater to allow for paramaterised queries.
+    */
+    public double ExecuteParametrisedScalarSelect(string query, Dictionary<string, object> parameters)
+    {   
+        double scalarValue = -1;
+
+        // Validate that query only contains letters, numbers, spaces, underscores, and safe SQL characters
+        if (!Regex.IsMatch(query, @"^[a-zA-Z0-9 ]+$"))
+        {
+            dijkstraPathfinder.errorMessage.text = "Invalid characters detected in the input.";
+            return scalarValue;
+        }
+
+        if (OpenConnection())
+        {
+            try
+            {   
+                // using is more efficient and disposes of resources when done
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    // add parameters safely
+                    foreach (var param in parameters)
+                    {
+                        command.Parameters.AddWithValue(param.Key, param.Value);
+                    }
+
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        // execute scalar will only return one value
+                        object result = command.ExecuteScalar();
+                        if (result != null) {
+                            scalarValue = double.Parse(result+"");
+                        }
+                    }
+                }
+            }  
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error executing query: " + ex.Message);
             }
+            finally
+            {
+                // closes connection regardless
+                CloseConnection();
+            }
+        }
 
         return scalarValue;
     }
