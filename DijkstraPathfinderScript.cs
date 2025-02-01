@@ -789,7 +789,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
     */
     public void PurgeEdges() {
         int[] gateNodes = {71, 56, 67, 2};
-        int[] beyondBoundaryNodes = {1, 68, 57, 69, 70};
+        int[] beyondBoundaryNodes = {1, 68, 57, 69, 70, 88};
 
         bool needToUseBoundaryNodes = false;
 
