@@ -18,17 +18,17 @@ public class PathRendererScript : MonoBehaviour
     public bool drawPath;
 
     // line properties
-    public float lineWidth = 0.05f; // line width
-    public Color lineColour = Color.yellow;
+    public float lineWidth; // line width
+    public Color lineColour;
     public Color startColour;
-    public Color targetColour;//#FF5F5F;
+    public Color targetColour;
 
     void Start() {
         mesh = new Mesh();
         this.GetComponent<MeshFilter>().mesh = mesh;
         // assign colours like this as c# does not recognise hex colours
-        ColorUtility.TryParseHtmlString("#5FD2FF", out startColour); // blue for now
-        ColorUtility.TryParseHtmlString("#FE5F64", out targetColour); // red for now
+        /* ColorUtility.TryParseHtmlString("#5FD2FF", out startColour); // blue for now
+        ColorUtility.TryParseHtmlString("#FE5F64", out targetColour); // red for now */
         createdLocationSymbols = new List<GameObject>();
         floor = false;
         drawPath = false;

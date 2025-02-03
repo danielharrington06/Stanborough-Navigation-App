@@ -35,7 +35,13 @@ public class Location // inherits was easiest as this is not attached to a gameo
             coordinates = databaseHelper.GetLocationCoordinates(id, type);
         }
         else {
-            ResetFields();
+            if (userText == "") { // if user text is empty, reset all fields
+                ResetFields(); 
+            }
+            else { // reset fields and set userText to some value
+                ResetFields();
+                userText = "invalid"; // set it to something otherwise if empty string, program things no start location value
+            }
         }
     }
 }
