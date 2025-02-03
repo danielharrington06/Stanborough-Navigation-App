@@ -1417,7 +1417,19 @@ public class DijkstraPathfinderScript : MonoBehaviour
     This function changes the values of the text output boxes to the results of the pathfinding.
     */
     public void OutputTextResults() {
-        timeOutput.text = $"{estimatedTime.Minutes} minutes {estimatedTime.Seconds} seconds";
+        // make sure correct for singlular minute and second eg 1 minute 1 second
+        if (estimatedTime.Minutes == 1) {
+            timeOutput.text = $"{estimatedTime.Minutes} minute ";
+        }
+        else {
+            timeOutput.text = $"{estimatedTime.Minutes} minutes ";
+        }
+        if (estimatedTime.Hours == 1) {
+            timeOutput.text += $"{estimatedTime.Seconds} second";
+        }
+        else {
+            timeOutput.text += $"{estimatedTime.Seconds} second";
+        }
         ETAOutput.text = $"{estimatedTimeOfArrival.Hours:D2}:{estimatedTimeOfArrival.Minutes:D2} arrival";
         distanceOutput.text = $"{estimatedDistance} metres";
     }
