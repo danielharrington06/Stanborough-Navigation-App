@@ -6,11 +6,9 @@ using UnityEngine;
 public class SearchManagerScript : MonoBehaviour
 {
     public bool searchOpen;
-    public float searchPanelMinX {get; private set;}
 
     void Start() {
         searchOpen = false; // search panel closed at first
-        searchPanelMinX = -3.36f; // update as needed if search panel changes
         
     }
 

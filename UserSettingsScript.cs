@@ -26,6 +26,7 @@ public class UserSettingsScript : MonoBehaviour
     void Awake() {
         floor = false; // false is floor 0, true is floor 1
         mapFocussed = true;
+        searchOpen = false;
         floorText.text = "0";
         ResetSettings();
     }
