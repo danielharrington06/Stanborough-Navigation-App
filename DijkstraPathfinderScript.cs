@@ -1428,7 +1428,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
             timeOutput.text += $"{estimatedTime.Seconds} second";
         }
         else {
-            timeOutput.text += $"{estimatedTime.Seconds} second";
+            timeOutput.text += $"{estimatedTime.Seconds} seconds";
         }
         ETAOutput.text = $"{estimatedTimeOfArrival.Hours:D2}:{estimatedTimeOfArrival.Minutes:D2} arrival";
         distanceOutput.text = $"{estimatedDistance} metres";
