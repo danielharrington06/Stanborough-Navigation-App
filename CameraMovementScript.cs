@@ -7,7 +7,6 @@ public class CameraMovement : MonoBehaviour
     
     [SerializeField] private DatabaseHelperScript databaseHelper;
     [SerializeField] private UserSettingsScript userSettings;
-    [SerializeField] private SearchManagerScript searchManager;
 
     public float cameraZoomStep, maxCameraSize, minCameraSize;
     private Vector3 dragOrigin; // to hold position of mouse in world space when click
@@ -89,12 +88,12 @@ public class CameraMovement : MonoBehaviour
         float maxCameraSizeX;
         float maxCameraSizeY;
 
-        if (!searchManager.searchOpen) { // normal but considering UI also
+        if (!userSettings.searchOpen) { // normal but considering UI also
             UIcameraAspectWidth = camera.aspect*(rightUIMaxX - leftUIMinX)/(2*relativeScreenWidth);
             maxCameraSizeX = (mapMaxX-mapMinX)/(UIcameraAspectWidth*2); 
             maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
         }
-        else {
+        else { // when search open 
             UIcameraAspectWidth = camera.aspect*(rightUIMaxX - searchPanelMinX)/(2*relativeScreenWidth);
             maxCameraSizeX = (mapMaxX-mapMinX)/(UIcameraAspectWidth*2); 
             maxCameraSizeY = (mapMaxY-mapMinY)/(1*2);
@@ -232,7 +231,7 @@ public class CameraMovement : MonoBehaviour
         // define max and min x and y for camera position
         float maxX = mapMaxX - cameraWidth;
         float minX = mapMinX + cameraWidth;
-        if (searchManager.searchOpen) {
+        if (userSettings.searchOpen) {
             float cameraMidpoint = (2*relativeScreenWidth + searchPanelMinX - rightUIMaxX)/2;
             maxX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
             minX -= UIcameraAspectWidth*camera.orthographicSize*(cameraMidpoint/relativeScreenWidth);
