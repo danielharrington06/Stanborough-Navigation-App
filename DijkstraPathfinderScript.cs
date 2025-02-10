@@ -847,8 +847,8 @@ public class DijkstraPathfinderScript : MonoBehaviour
         //matrixBuilder.BuildMatricesForPathfinding;
         ResetFields();
 
-        /* startLocation.SetupLocation();
-        targetLocation.SetupLocation(); */
+        startLocation.SetupLocation();
+        targetLocation.SetupLocation();
 
         // time using stopwatch
         stopwatch.Start();
