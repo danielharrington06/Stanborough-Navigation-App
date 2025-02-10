@@ -124,7 +124,7 @@ public class DijkstraPathfinderScript : MonoBehaviour
         }
 
         // eta check
-        if (estimatedTimeOfArrival != EstimateTimeOfArrival(estimatedTime)) {
+        if (estimatedTimeOfArrival != EstimateTimeOfArrival(estimatedTime) && showResults) {
             estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
             OutputTextResults();
         }
@@ -846,6 +846,9 @@ public class DijkstraPathfinderScript : MonoBehaviour
 
         //matrixBuilder.BuildMatricesForPathfinding;
         ResetFields();
+
+        /* startLocation.SetupLocation();
+        targetLocation.SetupLocation(); */
 
         // time using stopwatch
         stopwatch.Start();

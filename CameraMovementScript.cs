@@ -46,8 +46,8 @@ public class CameraMovement : MonoBehaviour
         }
 
         if (mapFocussed) {
-            PanCamera();
             ZoomScroll();
+            PanCamera();
             if (camera.orthographicSize == maxCameraSize && !cameraMaxSize) {
                 cameraMaxSize = true;
             }
